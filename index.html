@@ -1,48 +1,172 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Sanskrit Studio V1</title>
-<style>
-:root{--bg:#f6f7fb;--panel:#fff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb;--accent:#6d28d9;--accent2:#ede9fe;--danger:#b91c1c}*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}header{height:68px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:10}.brand{display:flex;align-items:center;gap:12px}.logo{width:38px;height:38px;border-radius:12px;background:var(--accent);color:white;display:grid;place-items:center;font-size:23px;font-family:serif}.brand h1{font-size:18px;margin:0}.brand small{display:block;color:var(--muted)}button,.file-label,select{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font:inherit;cursor:pointer}.primary{background:var(--accent);color:#fff;border-color:var(--accent)}.danger{color:var(--danger)}main{max-width:1400px;margin:auto;padding:20px;display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:18px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 3px 14px rgba(0,0,0,.035)}.toolbar{display:flex;flex-wrap:wrap;gap:8px;padding:12px;border-bottom:1px solid var(--line);align-items:center}.editor-wrap{padding:18px}.editor{width:100%;min-height:510px;border:0;outline:0;resize:vertical;font-family:"Noto Sans Devanagari","Kohinoor Devanagari","Devanagari Sangam MN",serif;font-size:27px;line-height:1.7;color:#111;background:white}.statusbar{border-top:1px solid var(--line);padding:9px 14px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between}.side-title{padding:16px 16px 8px;font-weight:700}.tabs{display:flex;padding:0 12px 12px;gap:6px}.tab.active{background:var(--accent2);color:var(--accent);border-color:#ddd6fe}.keyboard{padding:0 12px 16px}.group-title{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:12px 2px 7px}.keys{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.key{padding:8px 2px;font-size:18px;border-radius:8px}.key:hover{background:var(--accent2)}.wide{grid-column:span 2}.audio-box{margin:12px;padding:14px;border:1px dashed #c4b5fd;border-radius:12px;background:#faf9ff}.audio-box p{margin:0 0 10px;font-size:13px;color:var(--muted)}audio{width:100%;margin-top:10px}.transcribe-state{font-size:13px;margin-top:8px;color:var(--muted)}.hidden{display:none}.footer-note{font-size:12px;color:var(--muted);padding:0 12px 14px}@media(max-width:900px){main{grid-template-columns:1fr}.editor{min-height:390px}}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>Sanskrit Studio V5</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<header><div class="brand"><div class="logo">सं</div><div><h1>Sanskrit Studio <span style="color:#6d28d9">V1</span></h1><small>संस्कृत लेखन एवं प्रतिलेखन</small></div></div><div style="display:flex;gap:8px"><button id="copyBtn">Copy</button><button id="downloadBtn">Export TXT</button></div></header>
-<main>
-<section class="panel">
-<div class="toolbar">
-<button id="undoBtn">↶ Undo</button><button id="redoBtn">↷ Redo</button><button id="clearBtn" class="danger">Clear</button>
-<select id="fontSize"><option value="22">22 px</option><option value="27" selected>27 px</option><option value="32">32 px</option><option value="38">38 px</option></select>
-<button id="dandaBtn">। Danda</button><button id="doubleDandaBtn">॥ Double</button>
-<button class="primary" id="micBtn">🎙 Start Live</button>
-<label class="file-label" for="audioFile">＋ Open Audio</label><input id="audioFile" type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg,.opus,.webm,.mp4" hidden />
-</div>
-<div id="audioBox" class="audio-box hidden"><p><strong id="audioName"></strong> — MP3, WAV, M4A, AAC, FLAC, OGG/OPUS, WebM and compatible browser audio.</p><audio id="audioPlayer" controls></audio><button id="fileTranscribeBtn" style="margin-top:8px">Transcribe Audio</button><div class="transcribe-state" id="fileState">Audio loaded. Connect a Sanskrit ASR backend to enable file transcription.</div></div>
-<div class="editor-wrap"><textarea id="editor" class="editor" spellcheck="false" lang="sa" placeholder="अत्र संस्कृतेन लिखत…"></textarea></div>
-<div class="statusbar"><span id="counts">0 words · 0 characters</span><span id="saveState">Autosaved locally</span></div>
-</section>
-<aside class="panel">
-<div class="side-title">Sanskrit Keyboard</div>
-<div class="tabs"><button class="tab active" data-tab="letters">अक्षराणि</button><button class="tab" data-tab="marks">मात्राः</button><button class="tab" data-tab="special">विशेष</button></div>
-<div class="keyboard" id="keyboard"></div>
-<div class="footer-note">Click characters to insert them directly into the editor. No Roman transliteration is required.</div>
-</aside>
-</main>
-<script>
-const editor=document.getElementById('editor'),keyboard=document.getElementById('keyboard');
-const sets={letters:{'स्वराः':['अ','आ','इ','ई','उ','ऊ','ऋ','ॠ','ऌ','ए','ऐ','ओ','औ'],'व्यञ्जनानि':['क','ख','ग','घ','ङ','च','छ','ज','झ','ञ','ट','ठ','ड','ढ','ण','त','थ','द','ध','न','प','फ','ब','भ','म','य','र','ल','व','श','ष','स','ह']},marks:{'मात्राः':['ा','ि','ी','ु','ू','ृ','ॄ','ॢ','े','ै','ो','ौ'],'चिह्नानि':['्','ं','ः','ँ','ऽ','़','।','॥']},special:{'संयुक्ताक्षराणि':['क्ष','त्र','ज्ञ','श्र','द्य','त्व','स्व','स्त','न्त','न्द','द्ध','ञ्च','ञ्ज'],'अङ्काः':['०','१','२','३','४','५','६','७','८','९']}};
-function render(tab='letters'){keyboard.innerHTML='';Object.entries(sets[tab]).forEach(([title,chars])=>{let h=document.createElement('div');h.className='group-title';h.textContent=title;keyboard.appendChild(h);let grid=document.createElement('div');grid.className='keys';chars.forEach(ch=>{let b=document.createElement('button');b.className='key';b.textContent=ch;b.onclick=()=>insert(ch);grid.appendChild(b)});keyboard.appendChild(grid)})}
-function insert(t){let s=editor.selectionStart,e=editor.selectionEnd;editor.setRangeText(t,s,e,'end');editor.focus();changed()}
-function changed(){localStorage.setItem('sanskritStudioText',editor.value);let txt=editor.value.trim();let words=txt?txt.split(/\s+/).length:0;document.getElementById('counts').textContent=`${words} words · ${editor.value.length} characters`;document.getElementById('saveState').textContent='Autosaved locally'}
-editor.value=localStorage.getItem('sanskritStudioText')||'';editor.addEventListener('input',changed);changed();render();
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');render(b.dataset.tab)});
-document.getElementById('dandaBtn').onclick=()=>insert('।');document.getElementById('doubleDandaBtn').onclick=()=>insert('॥');document.getElementById('clearBtn').onclick=()=>{if(confirm('Clear the editor?')){editor.value='';changed()}};document.getElementById('undoBtn').onclick=()=>document.execCommand('undo');document.getElementById('redoBtn').onclick=()=>document.execCommand('redo');document.getElementById('fontSize').onchange=e=>editor.style.fontSize=e.target.value+'px';
-document.getElementById('copyBtn').onclick=async()=>{await navigator.clipboard.writeText(editor.value);document.getElementById('copyBtn').textContent='Copied ✓';setTimeout(()=>document.getElementById('copyBtn').textContent='Copy',1200)};
-document.getElementById('downloadBtn').onclick=()=>{let blob=new Blob([editor.value],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sanskrit-text.txt';a.click();URL.revokeObjectURL(a.href)};
-const audioFile=document.getElementById('audioFile');audioFile.onchange=()=>{let f=audioFile.files[0];if(!f)return;document.getElementById('audioBox').classList.remove('hidden');document.getElementById('audioName').textContent=f.name;document.getElementById('audioPlayer').src=URL.createObjectURL(f);document.getElementById('fileState').textContent='Audio loaded. V1 UI is ready; Sanskrit ASR backend must be connected for transcription.'};
-document.getElementById('fileTranscribeBtn').onclick=()=>alert('The V1 interface is ready. File transcription requires the Sanskrit ASR backend (IndicConformer) to be running.');
-let recognition=null,listening=false;document.getElementById('micBtn').onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('This browser does not expose live speech recognition. For accurate Sanskrit, connect the included UI to a Sanskrit ASR backend.');return}if(!recognition){recognition=new SR();recognition.continuous=true;recognition.interimResults=true;recognition.lang='sa-IN';recognition.onresult=e=>{let final='';for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)final+=e.results[i][0].transcript+' ';if(final)insert(final)};recognition.onend=()=>{if(listening)recognition.start()}}if(listening){listening=false;recognition.stop();document.getElementById('micBtn').textContent='🎙 Start Live'}else{listening=true;recognition.start();document.getElementById('micBtn').textContent='■ Stop Live'}};
-</script>
-</body></html>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">ॐ</div>
+        <div>
+          <h1>Sanskrit Studio</h1>
+          <p>V5 • Browser-only Sanskrit workspace</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="themeBtn" class="icon-btn" title="Toggle dark mode">☾</button>
+        <button id="clearBtn" class="secondary">Clear</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="panel controls-panel">
+        <div class="mode-row">
+          <div class="field-group">
+            <label for="inputMode">Input mode</label>
+            <select id="inputMode">
+              <option value="devanagari">Direct Devanāgarī</option>
+              <option value="iast">IAST → Devanāgarī</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label for="fontSize">Font size</label>
+            <select id="fontSize">
+              <option>24</option>
+              <option selected>30</option>
+              <option>36</option>
+              <option>42</option>
+              <option>52</option>
+            </select>
+          </div>
+
+          <div class="status-group">
+            <span id="speechSupport" class="status-pill">Checking speech support…</span>
+          </div>
+        </div>
+
+        <div class="speech-card">
+          <div>
+            <h2>Live Sanskrit</h2>
+            <p id="micNote">Live transcription works best in Google Chrome. Browser and device support may vary.</p>
+          </div>
+          <div class="speech-actions">
+            <button id="micBtn" class="primary mic-btn">🎙 Start Live Sanskrit</button>
+            <button id="stopBtn" class="secondary" disabled>Stop</button>
+          </div>
+          <div class="live-preview">
+            <span class="live-label">Live preview</span>
+            <div id="interimText">—</div>
+          </div>
+        </div>
+
+        <div class="audio-card">
+          <div>
+            <h2>Audio file</h2>
+            <p>Play MP3, WAV, M4A, AAC, FLAC, OGG/OPUS, WebM, or MP4 audio in the browser.</p>
+            <p class="muted">Browser-only V5 cannot automatically feed uploaded files into Web Speech Recognition. File transcription requires a separate speech model/service.</p>
+          </div>
+          <label class="upload-btn">
+            Choose audio
+            <input id="audioInput" type="file" accept="audio/*,video/mp4,.mp3,.wav,.m4a,.aac,.flac,.ogg,.opus,.webm,.mp4" hidden />
+          </label>
+          <div id="audioWrap" class="audio-wrap hidden">
+            <div id="audioName" class="audio-name"></div>
+            <audio id="audioPlayer" controls></audio>
+          </div>
+        </div>
+      </section>
+
+      <section class="editor-grid">
+        <article class="panel editor-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Devanāgarī Editor</h2>
+              <p id="counts">0 characters • 0 words</p>
+            </div>
+            <div class="toolbar">
+              <button id="undoBtn" class="tiny">↶ Undo</button>
+              <button id="redoBtn" class="tiny">↷ Redo</button>
+              <button id="copyBtn" class="tiny">Copy</button>
+              <button id="findBtn" class="tiny">Find</button>
+            </div>
+          </div>
+          <textarea id="editor" spellcheck="false" placeholder="संस्कृतम् अत्र लिखत…"></textarea>
+          <div id="findBar" class="findbar hidden">
+            <input id="findInput" placeholder="Find…" />
+            <input id="replaceInput" placeholder="Replace…" />
+            <button id="replaceBtn" class="tiny">Replace</button>
+            <button id="replaceAllBtn" class="tiny">Replace all</button>
+            <button id="closeFindBtn" class="tiny">×</button>
+          </div>
+        </article>
+
+        <article class="panel side-panel">
+          <div class="panel-header">
+            <div>
+              <h2>IAST View</h2>
+              <p>Updates automatically</p>
+            </div>
+          </div>
+          <textarea id="iastView" readonly placeholder="IAST transliteration appears here…"></textarea>
+
+          <div class="export-box">
+            <h3>Export</h3>
+            <div class="export-grid">
+              <button data-export="txt">TXT</button>
+              <button data-export="doc">Word</button>
+              <button data-export="pdf">PDF</button>
+              <button data-export="srt">SRT</button>
+              <button data-export="vtt">VTT</button>
+              <button data-export="csv">CSV</button>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel keyboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Full Sanskrit Keyboard</h2>
+            <p>All core letters and signs visible at once</p>
+          </div>
+        </div>
+
+        <div class="keyboard-layout">
+          <div class="key-section">
+            <h3>Vowels</h3>
+            <div class="keys" id="vowels"></div>
+          </div>
+          <div class="key-section">
+            <h3>Consonants</h3>
+            <div class="keys" id="consonants"></div>
+          </div>
+          <div class="key-section">
+            <h3>Mātrās & Signs</h3>
+            <div class="keys" id="signs"></div>
+          </div>
+          <div class="key-section">
+            <h3>Common Conjuncts</h3>
+            <div class="keys" id="conjuncts"></div>
+          </div>
+          <div class="key-section">
+            <h3>Numbers & Punctuation</h3>
+            <div class="keys" id="numbers"></div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        Sanskrit Studio V5 runs entirely in your browser. No backend required for typing or live browser speech recognition.
+      </footer>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

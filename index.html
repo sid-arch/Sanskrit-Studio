@@ -1,138 +1,83 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#0b1020" />
-  <title>Sanskrit Studio V7</title>
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>Sanskrit Studio V8</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark">ॐ</div>
-        <div>
-          <h1>Sanskrit Studio</h1>
-          <p>V7 • Sanskrit typing workspace</p>
+<header class="topbar">
+  <div class="brand"><div class="brand-mark">ॐ</div><div><h1>Sanskrit Studio</h1><p>V8 • Sanskrit typing workspace</p></div></div>
+  <div class="top-actions"><button id="themeBtn" class="icon-btn">☀</button><button id="clearBtn">Clear</button></div>
+</header>
+
+<main class="workspace">
+  <section class="panel controls-panel">
+    <div class="mode-row">
+      <div class="field-group"><label>Input mode</label><select id="inputMode"><option>Direct Devanāgarī</option></select></div>
+      <div class="field-group"><label>Font size</label><select id="fontSize"><option>24</option><option selected>30</option><option>36</option><option>42</option><option>52</option></select></div>
+      <div class="tip">Typing-only • Runs entirely in your browser</div>
+    </div>
+  </section>
+
+  <section class="editor-grid">
+    <article class="panel editor-panel">
+      <div class="panel-header">
+        <div><h2>Devanāgarī Editor</h2><p id="counts">0 characters • 0 words</p></div>
+        <div class="toolbar">
+          <button id="undoBtn" class="tiny">↶ Undo</button>
+          <button id="redoBtn" class="tiny">↷ Redo</button>
+          <button id="copyBtn" class="tiny">Copy</button>
+          <button id="findBtn" class="tiny">Find</button>
         </div>
       </div>
-      <div class="top-actions">
-        <button id="themeBtn" class="icon-btn" title="Toggle dark mode">☾</button>
-        <button id="clearBtn" class="secondary">Clear</button>
+      <textarea id="editor" spellcheck="false" placeholder="संस्कृतम् अत्र लिखत…"></textarea>
+      <div id="findBar" class="findbar hidden">
+        <input id="findInput" placeholder="Find…">
+        <input id="replaceInput" placeholder="Replace…">
+        <button id="replaceBtn" class="tiny">Replace</button>
+        <button id="replaceAllBtn" class="tiny">Replace all</button>
+        <button id="closeFindBtn" class="tiny">×</button>
       </div>
-    </header>
+    </article>
 
-    <main class="workspace">
-      <section class="panel controls-panel">
-        <div class="mode-row">
-          <div class="field-group">
-            <label for="inputMode">Input mode</label>
-            <select id="inputMode">
-              <option value="devanagari">Direct Devanāgarī</option>
-              <option value="iast">IAST → Devanāgarī</option>
-            </select>
-          </div>
+    <article class="panel side-panel">
+      <div class="panel-header"><div><h2>IAST View</h2><p>Updates automatically</p></div></div>
+      <textarea id="iastView" readonly placeholder="IAST transliteration appears here…"></textarea>
 
-          <div class="field-group">
-            <label for="fontSize">Font size</label>
-            <select id="fontSize">
-              <option>24</option>
-              <option selected>30</option>
-              <option>36</option>
-              <option>42</option>
-              <option>52</option>
-            </select>
-          </div>
+      <div class="iast-tools">
+        <label for="iastInput">Convert IAST to Devanāgarī</label>
+        <textarea id="iastInput" class="mini-textarea" placeholder="ahaṃ paśyāmi"></textarea>
+        <div class="iast-actions"><button id="convertIASTBtn" class="primary">Insert as Devanāgarī</button><button id="clearIASTBtn">Clear</button></div>
+      </div>
+
+      <div class="export-box">
+        <h3>Export</h3>
+        <div class="export-grid">
+          <button data-export="txt">TXT</button>
+          <button data-export="doc">Word</button>
+          <button data-export="pdf">PDF</button>
+          <button data-export="csv">CSV</button>
         </div>
-        </div>
-      </section>
+      </div>
+    </article>
+  </section>
 
-      <section class="editor-grid">
-        <article class="panel editor-panel">
-          <div class="panel-header">
-            <div>
-              <h2>Devanāgarī Editor</h2>
-              <p id="counts">0 characters • 0 words</p>
-            </div>
-            <div class="toolbar">
-              <button id="undoBtn" class="tiny">↶ Undo</button>
-              <button id="redoBtn" class="tiny">↷ Redo</button>
-              <button id="copyBtn" class="tiny">Copy</button>
-              <button id="findBtn" class="tiny">Find</button>
-            </div>
-          </div>
-          <textarea id="editor" spellcheck="false" placeholder="संस्कृतम् अत्र लिखत…"></textarea>
-          <div id="findBar" class="findbar hidden">
-            <input id="findInput" placeholder="Find…" />
-            <input id="replaceInput" placeholder="Replace…" />
-            <button id="replaceBtn" class="tiny">Replace</button>
-            <button id="replaceAllBtn" class="tiny">Replace all</button>
-            <button id="closeFindBtn" class="tiny">×</button>
-          </div>
-        </article>
+  <section class="panel keyboard-panel">
+    <div class="panel-header"><div><h2>Full Sanskrit Keyboard</h2><p>All core letters and signs visible at once</p></div></div>
+    <div class="keyboard-layout">
+      <div class="key-section"><h3>Vowels</h3><div class="keys" id="vowels"></div></div>
+      <div class="key-section consonant-section"><h3>Consonants</h3><div class="keys" id="consonants"></div></div>
+      <div class="key-section"><h3>Mātrās & Signs</h3><div class="keys" id="signs"></div></div>
+      <div class="key-section"><h3>Common Conjuncts</h3><div class="keys" id="conjuncts"></div></div>
+      <div class="key-section"><h3>Numbers & Punctuation</h3><div class="keys" id="numbers"></div></div>
+    </div>
+  </section>
 
-        <article class="panel side-panel">
-          <div class="panel-header">
-            <div>
-              <h2>IAST View</h2>
-              <p>Updates automatically</p>
-            </div>
-          </div>
-          <textarea id="iastView" readonly placeholder="IAST transliteration appears here…"></textarea>
-
-          <div class="export-box">
-            <h3>Export</h3>
-            <div class="export-grid">
-              <button data-export="txt">TXT</button>
-              <button data-export="doc">Word</button>
-              <button data-export="pdf">PDF</button>
-              <button data-export="srt">SRT</button>
-              <button data-export="vtt">VTT</button>
-              <button data-export="csv">CSV</button>
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section class="panel keyboard-panel">
-        <div class="panel-header">
-          <div>
-            <h2>Full Sanskrit Keyboard</h2>
-            <p>All core letters and signs visible at once</p>
-          </div>
-        </div>
-
-        <div class="keyboard-layout">
-          <div class="key-section">
-            <h3>Vowels</h3>
-            <div class="keys" id="vowels"></div>
-          </div>
-          <div class="key-section">
-            <h3>Consonants</h3>
-            <div class="keys" id="consonants"></div>
-          </div>
-          <div class="key-section">
-            <h3>Mātrās & Signs</h3>
-            <div class="keys" id="signs"></div>
-          </div>
-          <div class="key-section">
-            <h3>Common Conjuncts</h3>
-            <div class="keys" id="conjuncts"></div>
-          </div>
-          <div class="key-section">
-            <h3>Numbers & Punctuation</h3>
-            <div class="keys" id="numbers"></div>
-          </div>
-        </div>
-      </section>
-
-      <footer>
-        Sanskrit Studio V7 runs entirely in your browser as a focused Sanskrit typing workspace.
-      </footer>
-    </main>
-  </div>
-
-  <script src="app.js"></script>
+  <footer>Sanskrit Studio V8 • Typing only</footer>
+</main>
+<script src="app.js"></script>
 </body>
 </html>

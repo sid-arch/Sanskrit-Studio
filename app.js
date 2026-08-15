@@ -199,7 +199,7 @@
     const chars = Array.from(text).length;
     const words = text.trim() ? text.trim().split(/\s+/).length : 0;
     $("counts").textContent = `${chars} characters • ${words} words`;
-    localStorage.setItem("sanskritStudioV5Text", text);
+    localStorage.setItem("sanskritStudioV6Text", text);
     if (addHistory) pushHistory(text);
   }
 
@@ -337,7 +337,7 @@
   themeBtn.addEventListener("click", () => {
     const dark = document.documentElement.dataset.theme === "dark";
     document.documentElement.dataset.theme = dark ? "light" : "dark";
-    localStorage.setItem("sanskritStudioV5Theme", dark ? "light" : "dark");
+    localStorage.setItem("sanskritStudioV6Theme", dark ? "light" : "dark");
     themeBtn.textContent = dark ? "☾" : "☀";
   });
 
@@ -376,15 +376,6 @@
   micBtn.addEventListener("click", startSpeech);
   stopBtn.addEventListener("click", stopSpeech);
 
-  $("audioInput").addEventListener("change", (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const player = $("audioPlayer");
-    player.src = URL.createObjectURL(file);
-    $("audioName").textContent = `${file.name} • ${(file.size/1024/1024).toFixed(2)} MB`;
-    $("audioWrap").classList.remove("hidden");
-  });
-
   document.querySelectorAll("[data-export]").forEach(btn => {
     btn.addEventListener("click", () => exportFile(btn.dataset.export));
   });
@@ -399,11 +390,11 @@
   renderKeyboard();
   setupSpeech();
 
-  const savedTheme = localStorage.getItem("sanskritStudioV5Theme") || "dark";
+  const savedTheme = localStorage.getItem("sanskritStudioV6Theme") || "dark";
   document.documentElement.dataset.theme = savedTheme;
   themeBtn.textContent = savedTheme === "dark" ? "☀" : "☾";
 
-  editor.value = localStorage.getItem("sanskritStudioV5Text") || "";
+  editor.value = localStorage.getItem("sanskritStudioV6Text") || "";
   editor.style.fontSize = fontSize.value + "px";
   history = [editor.value];
   historyIndex = 0;

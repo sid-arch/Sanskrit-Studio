@@ -4,15 +4,9 @@
   const editor = $("editor");
   const iastView = $("iastView");
   const inputMode = $("inputMode");
-  const speechSupport = $("speechSupport");
-  const micBtn = $("micBtn");
-  const stopBtn = $("stopBtn");
-  const interimText = $("interimText");
   const themeBtn = $("themeBtn");
   const fontSize = $("fontSize");
 
-  let recognition = null;
-  let listening = false;
   let history = [""];
   let historyIndex = 0;
   let iastBuffer = "";
@@ -199,79 +193,8 @@
     const chars = Array.from(text).length;
     const words = text.trim() ? text.trim().split(/\s+/).length : 0;
     $("counts").textContent = `${chars} characters • ${words} words`;
-    localStorage.setItem("sanskritStudioV6Text", text);
+    localStorage.setItem("sanskritStudioV7Text", text);
     if (addHistory) pushHistory(text);
-  }
-
-  function setupSpeech() {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      speechSupport.textContent = "Live speech unavailable in this browser";
-      speechSupport.classList.add("bad");
-      micBtn.disabled = true;
-      return;
-    }
-
-    speechSupport.textContent = "Live speech available • sa-IN";
-    recognition = new SR();
-    recognition.lang = "sa-IN";
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => {
-      listening = true;
-      micBtn.classList.add("listening");
-      micBtn.textContent = "🎙 Listening…";
-      micBtn.disabled = true;
-      stopBtn.disabled = false;
-      interimText.textContent = "Listening…";
-    };
-
-    recognition.onresult = (event) => {
-      let interim = "";
-      let finalText = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const t = event.results[i][0].transcript;
-        if (event.results[i].isFinal) finalText += t + " ";
-        else interim += t;
-      }
-      interimText.textContent = interim || "…";
-      if (finalText.trim()) {
-        const prefix = editor.value && !/\s$/.test(editor.value) ? " " : "";
-        editor.value += prefix + finalText.trim();
-        editor.selectionStart = editor.selectionEnd = editor.value.length;
-        sync(true);
-      }
-    };
-
-    recognition.onerror = (event) => {
-      interimText.textContent = `Speech error: ${event.error}`;
-      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-        speechSupport.textContent = "Microphone permission blocked";
-        speechSupport.classList.add("bad");
-      }
-    };
-
-    recognition.onend = () => {
-      listening = false;
-      micBtn.classList.remove("listening");
-      micBtn.textContent = "🎙 Start Live Sanskrit";
-      micBtn.disabled = false;
-      stopBtn.disabled = true;
-      interimText.textContent = "—";
-    };
-  }
-
-  function startSpeech() {
-    if (!recognition || listening) return;
-    recognition.lang = "sa-IN";
-    try { recognition.start(); }
-    catch (e) { interimText.textContent = e.message; }
-  }
-
-  function stopSpeech() {
-    if (recognition && listening) recognition.stop();
   }
 
   function downloadBlob(filename, blob) {
@@ -337,7 +260,7 @@
   themeBtn.addEventListener("click", () => {
     const dark = document.documentElement.dataset.theme === "dark";
     document.documentElement.dataset.theme = dark ? "light" : "dark";
-    localStorage.setItem("sanskritStudioV6Theme", dark ? "light" : "dark");
+    localStorage.setItem("sanskritStudioV7Theme", dark ? "light" : "dark");
     themeBtn.textContent = dark ? "☾" : "☀";
   });
 
@@ -373,8 +296,6 @@
     sync(true);
   });
 
-  micBtn.addEventListener("click", startSpeech);
-  stopBtn.addEventListener("click", stopSpeech);
 
   document.querySelectorAll("[data-export]").forEach(btn => {
     btn.addEventListener("click", () => exportFile(btn.dataset.export));
@@ -388,13 +309,12 @@
   });
 
   renderKeyboard();
-  setupSpeech();
 
-  const savedTheme = localStorage.getItem("sanskritStudioV6Theme") || "dark";
+  const savedTheme = localStorage.getItem("sanskritStudioV7Theme") || "dark";
   document.documentElement.dataset.theme = savedTheme;
   themeBtn.textContent = savedTheme === "dark" ? "☀" : "☾";
 
-  editor.value = localStorage.getItem("sanskritStudioV6Text") || "";
+  editor.value = localStorage.getItem("sanskritStudioV7Text") || "";
   editor.style.fontSize = fontSize.value + "px";
   history = [editor.value];
   historyIndex = 0;

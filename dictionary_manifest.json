@@ -1,0 +1,195 @@
+{
+  "format": "SanskritStudioDictionaryV1",
+  "source": "Monier-Williams Sanskrit-English Dictionary (1899)",
+  "totalEntries": 193907,
+  "chunks": {
+    "u0905": {
+      "file": "dict_u0905.json",
+      "count": 18433
+    },
+    "u0906": {
+      "file": "dict_u0906.json",
+      "count": 4384
+    },
+    "u0907": {
+      "file": "dict_u0907.json",
+      "count": 946
+    },
+    "u0908": {
+      "file": "dict_u0908.json",
+      "count": 239
+    },
+    "u0909": {
+      "file": "dict_u0909.json",
+      "count": 5270
+    },
+    "u090a": {
+      "file": "dict_u090a.json",
+      "count": 376
+    },
+    "u090b": {
+      "file": "dict_u090b.json",
+      "count": 517
+    },
+    "u090c": {
+      "file": "dict_u090c.json",
+      "count": 4
+    },
+    "u090f": {
+      "file": "dict_u090f.json",
+      "count": 916
+    },
+    "u0910": {
+      "file": "dict_u0910.json",
+      "count": 217
+    },
+    "u0913": {
+      "file": "dict_u0913.json",
+      "count": 164
+    },
+    "u0914": {
+      "file": "dict_u0914.json",
+      "count": 422
+    },
+    "u0915": {
+      "file": "dict_u0915.json",
+      "count": 12983
+    },
+    "u0916": {
+      "file": "dict_u0916.json",
+      "count": 1024
+    },
+    "u0917": {
+      "file": "dict_u0917.json",
+      "count": 4835
+    },
+    "u0918": {
+      "file": "dict_u0918.json",
+      "count": 717
+    },
+    "u0919": {
+      "file": "dict_u0919.json",
+      "count": 3
+    },
+    "u091a": {
+      "file": "dict_u091a.json",
+      "count": 3485
+    },
+    "u091b": {
+      "file": "dict_u091b.json",
+      "count": 525
+    },
+    "u091c": {
+      "file": "dict_u091c.json",
+      "count": 3246
+    },
+    "u091d": {
+      "file": "dict_u091d.json",
+      "count": 155
+    },
+    "u091e": {
+      "file": "dict_u091e.json",
+      "count": 2
+    },
+    "u091f": {
+      "file": "dict_u091f.json",
+      "count": 117
+    },
+    "u0920": {
+      "file": "dict_u0920.json",
+      "count": 17
+    },
+    "u0921": {
+      "file": "dict_u0921.json",
+      "count": 123
+    },
+    "u0922": {
+      "file": "dict_u0922.json",
+      "count": 39
+    },
+    "u0923": {
+      "file": "dict_u0923.json",
+      "count": 3
+    },
+    "u0924": {
+      "file": "dict_u0924.json",
+      "count": 5420
+    },
+    "u0925": {
+      "file": "dict_u0925.json",
+      "count": 23
+    },
+    "u0926": {
+      "file": "dict_u0926.json",
+      "count": 7792
+    },
+    "u0927": {
+      "file": "dict_u0927.json",
+      "count": 2359
+    },
+    "u0928": {
+      "file": "dict_u0928.json",
+      "count": 8317
+    },
+    "u092a": {
+      "file": "dict_u092a.json",
+      "count": 21030
+    },
+    "u092b": {
+      "file": "dict_u092b.json",
+      "count": 536
+    },
+    "u092c": {
+      "file": "dict_u092c.json",
+      "count": 4053
+    },
+    "u092d": {
+      "file": "dict_u092d.json",
+      "count": 4598
+    },
+    "u092e": {
+      "file": "dict_u092e.json",
+      "count": 11173
+    },
+    "u092f": {
+      "file": "dict_u092f.json",
+      "count": 3220
+    },
+    "u0930": {
+      "file": "dict_u0930.json",
+      "count": 5364
+    },
+    "u0932": {
+      "file": "dict_u0932.json",
+      "count": 2711
+    },
+    "u0935": {
+      "file": "dict_u0935.json",
+      "count": 18574
+    },
+    "u0936": {
+      "file": "dict_u0936.json",
+      "count": 10209
+    },
+    "u0937": {
+      "file": "dict_u0937.json",
+      "count": 629
+    },
+    "u0938": {
+      "file": "dict_u0938.json",
+      "count": 25057
+    },
+    "u0939": {
+      "file": "dict_u0939.json",
+      "count": 3677
+    },
+    "u0960": {
+      "file": "dict_u0960.json",
+      "count": 2
+    },
+    "u0961": {
+      "file": "dict_u0961.json",
+      "count": 1
+    }
+  }
+}

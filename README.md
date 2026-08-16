@@ -108,3 +108,17 @@ If all files live in the repository root:
 6. Save
 
 Add your official logo as `FSL_logo.png`.
+
+
+## Full Monier-Williams dictionary included
+
+Converted from the supplied Cologne `mw.xml` dataset.
+
+- 193,907 unique searchable headwords
+- 47 on-demand JSON chunks
+- Devanāgarī, IAST, and original SLP1 headwords
+- multiple senses preserved
+- grammar labels where available
+- source attribution retained
+
+The app loads `dictionary_manifest.json` on startup and downloads only the relevant `dict_*.json` chunk during a search. All dictionary files stay in the same folder as `index.html`.

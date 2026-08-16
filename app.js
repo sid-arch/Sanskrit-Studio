@@ -57,7 +57,9 @@
   let db = null;
   let documents = [];
   let activeDocumentId = null;
-  let dictionaryEntries = [];
+  let dictionaryEntries = []; // starter fallback only
+  let dictionaryManifest = null;
+  const dictionaryChunkCache = new Map();
   let lastEditorRange = null;
   let saveTimer = null;
   let lastSnapshotTime = 0;
@@ -943,22 +945,54 @@
   // -------------------------
   async function loadDictionary() {
     try {
+      const manifestResponse = await fetch("dictionary_manifest.json", { cache: "no-store" });
+      if (!manifestResponse.ok) throw new Error(`dictionary_manifest.json returned ${manifestResponse.status}`);
+      dictionaryManifest = await manifestResponse.json();
+      if (!dictionaryManifest?.chunks || !dictionaryManifest?.totalEntries) throw new Error("Invalid dictionary manifest");
+      dictionaryEntries = [];
+      $("dictionaryCount").textContent = `${Number(dictionaryManifest.totalEntries).toLocaleString()} Monier-Williams entries`;
+      return;
+    } catch (manifestError) {
+      console.warn("Full dictionary manifest unavailable; falling back to dictionary.json:", manifestError);
+    }
+
+    try {
       const response = await fetch("dictionary.json", { cache: "no-store" });
-
-      if (!response.ok) {
-        throw new Error(`dictionary.json returned ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`dictionary.json returned ${response.status}`);
       const payload = await response.json();
       dictionaryEntries = Array.isArray(payload) ? payload : (payload.entries || []);
-
-      $("dictionaryCount").textContent =
-        `${dictionaryEntries.length.toLocaleString()} local entries`;
+      $("dictionaryCount").textContent = `${dictionaryEntries.length.toLocaleString()} starter entries`;
     } catch (error) {
       console.warn("Dictionary load failed:", error);
       dictionaryEntries = [];
-      $("dictionaryCount").textContent = "Dictionary file unavailable";
+      $("dictionaryCount").textContent = "Dictionary unavailable";
     }
+  }
+
+  function dictionaryBucketForQuery(query) {
+    const raw = cleanDictionaryQuery(query);
+    if (!raw) return "other";
+    let devanagari;
+    if (/^[\u0900-\u097F]/.test(raw)) devanagari = raw;
+    else devanagari = romanToDevanagari(normalizeRoman(raw.toLowerCase()));
+    const first = Array.from(devanagari || "")[0];
+    if (!first || first < "\u0900" || first > "\u097F") return "other";
+    return `u${first.codePointAt(0).toString(16).padStart(4, "0")}`;
+  }
+
+  async function loadDictionaryChunk(bucket) {
+    if (!dictionaryManifest) return dictionaryEntries;
+    if (dictionaryChunkCache.has(bucket)) return dictionaryChunkCache.get(bucket);
+    const info = dictionaryManifest.chunks?.[bucket];
+    if (!info?.file) {
+      dictionaryChunkCache.set(bucket, []);
+      return [];
+    }
+    const response = await fetch(info.file, { cache: "force-cache" });
+    if (!response.ok) throw new Error(`${info.file} returned ${response.status}`);
+    const entries = await response.json();
+    dictionaryChunkCache.set(bucket, entries);
+    return entries;
   }
 
   function cleanDictionaryQuery(query) {
@@ -985,27 +1019,41 @@
     if (word === devanagariQuery || iast === lower) score = 100;
     else if (word.startsWith(devanagariQuery) || iast.startsWith(lower)) score = 82;
     else if (word.includes(devanagariQuery) || iast.includes(lower)) score = 62;
-    else if (meaning.includes(raw.toLowerCase())) score = 22;
+    else if (!dictionaryManifest && meaning.includes(raw.toLowerCase())) score = 22;
+
+    if (score === 100 && /^(?:see\b|\(in comp\.|for\b)/i.test(String(entry.meaning || "").trim())) {
+      score = 70;
+    }
 
     return score;
   }
 
-  function searchDictionary(query) {
+  async function searchDictionary(query) {
     const clean = cleanDictionaryQuery(query);
-
     if (!clean) {
       renderDictionaryResults([], "");
       return;
     }
 
-    const results = dictionaryEntries
-      .map(entry => ({ entry, score: scoreDictionaryEntry(entry, clean) }))
-      .filter(item => item.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 60)
-      .map(item => item.entry);
-
-    renderDictionaryResults(results, clean);
+    try {
+      const bucket = dictionaryBucketForQuery(clean);
+      const entries = dictionaryManifest ? await loadDictionaryChunk(bucket) : dictionaryEntries;
+      const results = entries
+        .map(entry => ({ entry, score: scoreDictionaryEntry(entry, clean) }))
+        .filter(item => item.score > 0)
+        .sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          const aRichness = (a.entry.senses?.length || 0) * 10 + String(a.entry.meaning || "").length;
+          const bRichness = (b.entry.senses?.length || 0) * 10 + String(b.entry.meaning || "").length;
+          return bRichness - aRichness;
+        })
+        .slice(0, 80)
+        .map(item => item.entry);
+      renderDictionaryResults(results, clean);
+    } catch (error) {
+      console.error("Dictionary chunk search failed:", error);
+      $("dictionaryResults").innerHTML = `<div class="dictionary-card"><div class="dictionary-meaning">The dictionary chunk could not be loaded. Make sure every <code>dict_*.json</code> file is uploaded beside <code>index.html</code>.</div></div>`;
+    }
   }
 
   function renderDictionaryResults(results, query) {
@@ -1049,7 +1097,13 @@
         </div>
 
         <div class="dictionary-meaning">${escapeHTML(entry.meaning || "")}</div>
-        <div class="dictionary-source">${escapeHTML(entry.source || "Local dictionary")}</div>
+        ${Array.isArray(entry.senses) && entry.senses.length > 1 ? `
+          <details class="dictionary-senses">
+            <summary>More meanings (${entry.senses.length})</summary>
+            <ol>${entry.senses.slice(1).map(sense => `<li>${escapeHTML(sense)}</li>`).join("")}</ol>
+          </details>
+        ` : ""}
+        <div class="dictionary-source">${escapeHTML(entry.source || "Local dictionary")}${entry.slp1 ? ` • SLP1: ${escapeHTML(entry.slp1)}` : ""}</div>
 
         <div class="dictionary-actions">
           <button class="primary-btn" type="button" data-insert>Insert into document</button>

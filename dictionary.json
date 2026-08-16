@@ -14,23 +14,44 @@
     "source": "Sanskrit Studio starter lexicon"
   },
   {
+    "word": "सः",
+    "iast": "saḥ",
+    "meaning": "he; that (masculine singular).",
+    "grammar": "pronoun",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "सा",
+    "iast": "sā",
+    "meaning": "she; that (feminine singular).",
+    "grammar": "pronoun",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
     "word": "पश्यामि",
     "iast": "paśyāmi",
     "meaning": "I see.",
-    "grammar": "verb form",
+    "grammar": "verb form; present, first-person singular",
     "source": "Sanskrit Studio starter lexicon"
   },
   {
     "word": "गच्छति",
     "iast": "gacchati",
     "meaning": "he/she/it goes.",
-    "grammar": "verb form",
+    "grammar": "verb form; present, third-person singular",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "भवति",
+    "iast": "bhavati",
+    "meaning": "he/she/it becomes, is, or happens.",
+    "grammar": "verb form; present, third-person singular",
     "source": "Sanskrit Studio starter lexicon"
   },
   {
     "word": "धर्म",
     "iast": "dharma",
-    "meaning": "duty, law, right conduct, principle, virtue; context-dependent.",
+    "meaning": "duty, law, right conduct, principle, virtue; meaning depends on context.",
     "grammar": "noun",
     "source": "Sanskrit Studio starter lexicon"
   },
@@ -44,21 +65,21 @@
   {
     "word": "ज्ञान",
     "iast": "jñāna",
-    "meaning": "knowledge, understanding.",
+    "meaning": "knowledge, knowing, understanding.",
     "grammar": "noun",
     "source": "Sanskrit Studio starter lexicon"
   },
   {
     "word": "विद्या",
     "iast": "vidyā",
-    "meaning": "knowledge, learning, science.",
-    "grammar": "noun",
+    "meaning": "knowledge, learning, study, science.",
+    "grammar": "noun, feminine",
     "source": "Sanskrit Studio starter lexicon"
   },
   {
     "word": "गुरु",
     "iast": "guru",
-    "meaning": "teacher; heavy, important.",
+    "meaning": "teacher; heavy, weighty, important.",
     "grammar": "noun/adjective",
     "source": "Sanskrit Studio starter lexicon"
   },
@@ -86,29 +107,29 @@
   {
     "word": "सुख",
     "iast": "sukha",
-    "meaning": "happiness, ease, comfort.",
+    "meaning": "happiness, ease, comfort, pleasure.",
     "grammar": "noun/adjective",
     "source": "Sanskrit Studio starter lexicon"
   },
   {
     "word": "दुःख",
     "iast": "duḥkha",
-    "meaning": "suffering, pain, difficulty.",
-    "grammar": "noun",
+    "meaning": "suffering, pain, difficulty, unhappiness.",
+    "grammar": "noun/adjective",
     "source": "Sanskrit Studio starter lexicon"
   },
   {
     "word": "शान्ति",
     "iast": "śānti",
     "meaning": "peace, calm, tranquility.",
-    "grammar": "noun",
+    "grammar": "noun, feminine",
     "source": "Sanskrit Studio starter lexicon"
   },
   {
     "word": "नमः",
     "iast": "namaḥ",
     "meaning": "salutation, reverence, homage.",
-    "grammar": "indeclinable usage",
+    "grammar": "indeclinable / noun usage",
     "source": "Sanskrit Studio starter lexicon"
   },
   {

@@ -1,13 +1,15 @@
-# Dictionary Setup for Sanskrit Studio V9
+# Dictionary Setup — Sanskrit Studio V10
 
-V9 already includes a starter `dictionary.json`.
+V10 reads a local file named:
 
-## Recommended source
-The Cologne Digital Sanskrit Dictionaries (CDSL) provide downloadable Sanskrit dictionary data, including XML files whose headwords are commonly encoded in SLP1.
+`dictionary.json`
 
-Start with ONE dictionary, such as Monier-Williams or Apte.
+from the same folder as `index.html`.
 
-## V9 JSON format
+A starter dictionary is already included so the Dictionary section works immediately.
+
+## Expected JSON format
+
 ```json
 [
   {
@@ -20,21 +22,55 @@ Start with ONE dictionary, such as Monier-Williams or Apte.
 ]
 ```
 
-`word` and `meaning` are required. `iast`, `grammar`, and `source` are strongly recommended.
+### Required
+- `word`
+- `meaning`
 
-## Workflow
-1. Download one dictionary dataset from CDSL.
-2. Parse the XML entries.
-3. Convert each SLP1 headword to IAST.
+### Recommended
+- `iast`
+- `grammar`
+- `source`
+
+## Full dictionary plan
+
+For the large-dictionary conversion, use an open Sanskrit lexicon source and transform the data into this format.
+
+A strong source is the Cologne Digital Sanskrit Dictionaries project.
+
+Good first dictionaries:
+- Monier-Williams Sanskrit-English Dictionary
+- Apte Sanskrit-English Dictionary
+
+Do **one dictionary first**. Do not merge dozens of dictionaries on the first pass.
+
+## Conversion workflow
+
+1. Obtain the dictionary source data.
+2. Read each Sanskrit headword.
+3. Convert its source transliteration (often SLP1) to IAST.
 4. Convert the same headword to Devanāgarī.
-5. Convert the definition markup to readable plain text.
-6. Output one JSON object per entry using the format above.
-7. Save it as `dictionary.json`.
-8. Put it beside `index.html`.
-9. Commit/push to GitHub.
-10. Reload Sanskrit Studio. The Dictionary tab shows the new entry count.
+5. Extract/clean the English definition.
+6. Preserve grammar information where available.
+7. Preserve the source dictionary name.
+8. Build a JSON object for each entry.
+9. Save the final array as `dictionary.json`.
+10. Replace the starter file.
+11. Push to GitHub.
+12. Reload Sanskrit Studio.
 
-## Size
-A large single JSON file can be slow on phones. Start with one dictionary. If it gets huge, split it into indexed chunks in a later version.
+V10 will automatically report the number of dictionary entries loaded.
 
-Keep source attribution and comply with the data source's license/terms.
+## Large-file optimization
+
+A very large dictionary may become slow on phones because the current V10 implementation loads the complete JSON file into memory.
+
+If the full dictionary becomes too large, the next optimization should be a chunked dictionary structure such as:
+
+- `dictionary-a.json`
+- `dictionary-k.json`
+- `dictionary-g.json`
+- etc.
+
+or a compact indexed format.
+
+That optimization can still remain fully browser-only and $0.

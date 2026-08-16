@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b1020">
   <meta name="color-scheme" content="dark light">
-  <title>Sanskrit Studio V10</title>
+  <title>Sanskrit Studio V11</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -24,7 +24,7 @@
         </div>
         <div class="brand-copy">
           <div class="brand-title">Sanskrit Studio</div>
-          <div class="brand-subtitle">V10 • Sanskrit writing workspace</div>
+          <div class="brand-subtitle">V11 • Sanskrit writing workspace</div>
         </div>
       </div>
 
@@ -232,20 +232,17 @@
 
     <!-- FLOATING KEYBOARD -->
     <section id="floatingKeyboard" class="floating-keyboard" aria-label="Sanskrit keyboard">
-      <header id="keyboardHandle" class="keyboard-header">
+      <header class="keyboard-header">
         <div class="keyboard-title">
           <span class="icon" data-icon="keyboard"></span>
           <div>
             <strong>Sanskrit Keyboard</strong>
-            <span>Drag only from this bar</span>
+            <span>Fixed bottom dock</span>
           </div>
         </div>
 
         <div class="keyboard-controls">
-          <button id="keyboardResetBtn" class="keyboard-control-btn" type="button" title="Reset position">
-            <span class="icon" data-icon="rotate-ccw"></span>
-          </button>
-          <button id="keyboardMinimizeBtn" class="keyboard-control-btn" type="button" title="Minimize">
+                    <button id="keyboardMinimizeBtn" class="keyboard-control-btn" type="button" title="Minimize">
             <span class="icon" data-icon="minus"></span>
           </button>
           <button id="keyboardCloseBtn" class="keyboard-control-btn" type="button" title="Close">
@@ -447,7 +444,7 @@
       <header class="help-header">
         <div>
           <h2>How to Use Sanskrit Studio</h2>
-          <p>Everything in V10, explained.</p>
+          <p>Everything in V11, explained.</p>
         </div>
         <button id="closeHelpBtn" class="square-btn" type="button">
           <span class="icon" data-icon="x"></span>
@@ -487,7 +484,7 @@
 
         <article data-help="keyboard floating drag stable reset minimize">
           <h3>Floating Keyboard</h3>
-          <p>The Sanskrit keyboard floats above the page. It only moves when you drag the dedicated header bar. Press the reset icon to return it to the default position, minimize it with the minus icon, or close it with ×. Reopen it from the header or with Ctrl/Cmd+K.</p>
+          <p>The Sanskrit keyboard is docked to the bottom of the screen. It never moves or drifts. Minimize it with the minus icon or close it with ×. Reopen it from the header or with Ctrl/Cmd+K. The editor automatically leaves room for the docked keyboard.</p>
         </article>
 
         <article data-help="dictionary lookup right click insert">
@@ -527,7 +524,7 @@
         <img src="FSL_logo.png" alt="" class="footer-logo" onerror="this.style.display='none'">
         <span>Built by <strong>For the Love of Samskritam</strong></span>
       </div>
-      <span class="footer-version">Sanskrit Studio V10</span>
+      <span class="footer-version">Sanskrit Studio V11</span>
     </footer>
   </div>
 

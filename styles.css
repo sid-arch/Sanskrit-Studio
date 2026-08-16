@@ -1,5 +1,6 @@
 
 :root {
+  --keyboard-offset: 0px;
   --bg: #090d14;
   --surface: #0f1623;
   --surface-2: #151e2d;
@@ -802,20 +803,16 @@ textarea:focus-visible,
 .floating-keyboard {
   position: fixed;
   z-index: 100;
-  left: 24px;
-  bottom: 22px;
-  width: min(1120px, calc(100vw - 48px));
+  left: 50%;
+  bottom: 12px;
+  width: min(1180px, calc(100vw - 28px));
+  max-height: min(48vh, 430px);
   overflow: hidden;
+  transform: translateX(-50%);
   border: 1px solid var(--border-strong);
-  border-radius: 17px;
+  border-radius: 18px;
   background: var(--surface);
   box-shadow: var(--shadow-strong);
-  transform: translateZ(0);
-}
-
-.floating-keyboard.dragging {
-  user-select: none;
-  cursor: grabbing;
 }
 
 .keyboard-header {
@@ -827,8 +824,7 @@ textarea:focus-visible,
   padding: 7px 9px 7px 12px;
   border-bottom: 1px solid var(--border);
   background: var(--surface-2);
-  cursor: grab;
-  touch-action: none;
+  cursor: default;
 }
 
 .keyboard-title {
@@ -1410,19 +1406,6 @@ textarea:focus-visible,
     min-height: 590px;
   }
 
-  .floating-keyboard {
-    left: 0 !important;
-    top: auto !important;
-    bottom: 0 !important;
-    width: 100vw !important;
-    max-height: 60vh;
-    overflow: auto;
-    border-radius: 18px 18px 0 0;
-  }
-
-  .keyboard-header {
-    cursor: default;
-  }
 
   .keyboard-title span:last-child {
     display: none;
@@ -1489,5 +1472,39 @@ textarea:focus-visible,
 
   .roman-composer-head .link-btn {
     margin-top: 6px;
+  }
+}
+
+
+/* V11 docked keyboard layout spacing */
+#app {
+  min-height: 100vh;
+  padding-bottom: calc(var(--keyboard-offset) + 14px);
+  transition: padding-bottom .16s ease;
+}
+
+.floating-keyboard.minimized {
+  max-height: none;
+}
+
+.floating-keyboard.minimized .keyboard-content {
+  display: none;
+}
+
+.floating-keyboard.hidden + .selection-menu {
+  /* no-op; keeps selector stable */
+}
+
+@media (max-width: 760px) {
+  .floating-keyboard {
+    left: 0;
+    bottom: 0;
+    width: 100vw;
+    max-height: 58vh;
+    transform: none;
+    border-radius: 18px 18px 0 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
   }
 }

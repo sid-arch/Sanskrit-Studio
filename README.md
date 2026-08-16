@@ -1,6 +1,6 @@
-# Sanskrit Studio V10 — Complete Rebuild
+# Sanskrit Studio V11 — Fixed Keyboard Edition
 
-V10 is a clean rebuild of Sanskrit Studio as a browser-only Sanskrit writing environment.
+V11 keeps the complete V10 writing environment, but rebuilds the Sanskrit keyboard as a stable bottom dock.
 
 ## Put these files together in one folder
 
@@ -12,120 +12,99 @@ V10 is a clean rebuild of Sanskrit Studio as a browser-only Sanskrit writing env
 - `README.md`
 - `DICTIONARY_SETUP.md`
 
-There is **no `/docs` folder requirement**. All site files are designed to live together.
+## V11 keyboard behavior
 
-## What V10 includes
+- Fixed to the bottom of the screen
+- Never draggable
+- Never changes position accidentally
+- Full Sanskrit keyboard
+- Vowels
+- Consonants
+- Mātrās and signs
+- Common conjuncts
+- Sanskrit numerals
+- No Recent row
+- Minimize button
+- Close button
+- Header button reopens it
+- Ctrl/Cmd+K toggles it
+- Open/closed state is remembered
+- Minimized state is remembered
+- Editor/page automatically gets bottom spacing so the keyboard does not cover content
+- On phones/tablets it becomes a full-width bottom dock
 
-### Writing
+## Full feature set retained
+
+### Write
 - Multiple document tabs
-- Double-click tab names to rename
-- Rich text editor
+- Double-click tab name to rename
+- Rich-text editing
 - Bold
 - Italic
 - Underline
 - Highlight
 - Alignment
-- Bullet and numbered lists
-- Clear formatting
+- Bullet lists
+- Numbered lists
 - Text sizing
-- Undo/redo through browser editing shortcuts
+- Clear formatting
+
+### Sanskrit input
+- Direct Devanāgarī
+- Roman/IAST → Devanāgarī composer
+- Easy Roman aliases
+- Live Devanāgarī → IAST panel
 
 ### Saving
-- IndexedDB document storage
+- IndexedDB
 - Autosave
-- Visible `Saving…` → `Saved locally` status
+- Saving / Saved locally indicator
 - Reload persistence
 - Hard reload persistence
 - Browser restart persistence
 - Device restart persistence on the same browser/device
-- Workspace export/import backup
 
 ### History
-- Rebuilt History workflow
-- Opening History saves the current document first
-- Creates a current snapshot before showing the list
+- Current document is saved before History opens
+- Fresh snapshot created when History opens
 - Automatic snapshots while writing
-- Restore an older version
-- Current version is protected before restore
-- Maximum 30 snapshots per document
+- Restore old versions
+- Current version protected before restore
+- Up to 30 snapshots per document
 
 ### Trash
-- Closing a document sends it to Recently Deleted
+- Closing a document moves it to Recently Deleted
 - Restore documents
 - Permanently delete documents
-- Sanskrit Studio always ensures Write has at least one document
-
-### Sanskrit input
-- Direct Devanāgarī typing
-- Stable floating Sanskrit keyboard
-- Keyboard moves only when dragging the dedicated title bar
-- Movement threshold prevents accidental jumps
-- Reset-position button
-- Minimize
-- Close/reopen
-- Position remembered
-- No Recent row
-- Roman / IAST → Devanāgarī composer
-- Easy aliases like `aa`, `ii`, `.r`, `.n`, `.s`, `.m`, `.h`
-- Live Devanāgarī → IAST view
 
 ### Dictionary
-- Separate Dictionary section
-- Search Devanāgarī
-- Search IAST
-- Right-click selected Sanskrit word → Lookup
-- Toolbar selected-word lookup
-- Dictionary result → Insert into current document
-- Loads `dictionary.json`
+- Devanāgarī search
+- IAST search
+- Right-click selected word → Dictionary
+- Toolbar lookup
+- Dictionary → Editor insertion
+- Local `dictionary.json`
 
-### UI
-- Entire V10 UI rebuilt
-- Consistent inline SVG icon system
-- Dark, Light, Paper themes
-- Rounded FSL logo in header
-- Rounded FSL logo in footer
+### Workspace
+- Export Workspace
+- Import Workspace
 - Settings modal
-- Detailed searchable Help side drawer
-- Responsive phone/tablet layout
+- Searchable Help drawer
+- Dark / Light / Paper themes
+- Consistent SVG icons
+- Rounded FSL logo in header and footer
 - No Focus mode
+- No Recent-character row
 
 ## GitHub Pages
 
-If all files are in the repository root:
+If all files live in the repository root:
 
-1. GitHub repository → **Settings**
-2. **Pages**
-3. Source: **Deploy from a branch**
-4. Branch: **main**
-5. Folder: **/ (root)**
+1. Repository → Settings
+2. Pages
+3. Deploy from a branch
+4. Branch: `main`
+5. Folder: `/ (root)`
 6. Save
 
-Then add your official logo as:
-
-`FSL_logo.png`
-
-## Important storage note
-
-IndexedDB is local to a browser/device.
-
-Your documents survive:
-- reloads
-- hard reloads
-- closing and reopening the browser
-- restarting the device
-
-They do **not** automatically appear on another device.
-
-Use **Settings → Export Workspace** to move or back up documents.
-
-## Keyboard shortcuts
-
-- Ctrl/Cmd + B → Bold
-- Ctrl/Cmd + I → Italic
-- Ctrl/Cmd + U → Underline
-- Ctrl/Cmd + Z → Undo
-- Ctrl/Cmd + Shift + Z → Redo
-- Ctrl/Cmd + S → Save now
-- Ctrl/Cmd + N → New document
-- Ctrl/Cmd + K → Toggle Sanskrit keyboard
-- Ctrl/Cmd + Shift + D → Lookup selected word
+Add your official logo as `FSL_logo.png`.

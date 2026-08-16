@@ -49,7 +49,7 @@
   // CONSTANTS / STATE
   // -------------------------
   const DB_NAME = "SanskritStudio";
-  const DB_VERSION = 10;
+  const DB_VERSION = 11;
   const SNAPSHOT_MIN_INTERVAL = 45_000;
   const MAX_HISTORY_PER_DOCUMENT = 30;
   const SAVE_DELAY = 350;
@@ -69,9 +69,8 @@
     showIast: true,
     keyboardStartup: true,
     keyboard: {
-      left: 24,
-      top: null,
-      minimized: false
+      minimized: false,
+      visible: true
     }
   };
 
@@ -284,14 +283,11 @@
     $("inputModeSelect").value = settings.defaultInput || "direct";
     toggleRomanComposer();
 
-    if (settings.keyboardStartup === false) {
-      setKeyboardVisible(false);
-    } else {
-      setKeyboardVisible(true);
-      restoreKeyboardPosition();
-    }
+    const shouldShowKeyboard = settings.keyboardStartup !== false && settings.keyboard.visible !== false;
+    setKeyboardVisible(shouldShowKeyboard, { save: false });
 
     $("floatingKeyboard").classList.toggle("minimized", !!settings.keyboard.minimized);
+    updateKeyboardOffset();
   }
 
   // -------------------------
@@ -912,126 +908,34 @@
     renderSet("keyboardNumbers", keyboardSets.numbers);
   }
 
-  function setKeyboardVisible(visible) {
-    $("floatingKeyboard").classList.toggle("hidden", !visible);
-  }
-
-  function resetKeyboardPosition({ save = true } = {}) {
+  function updateKeyboardOffset() {
     const keyboard = $("floatingKeyboard");
 
-    keyboard.style.left = window.innerWidth <= 760 ? "0px" : "24px";
-    keyboard.style.top = "auto";
-    keyboard.style.bottom = window.innerWidth <= 760 ? "0px" : "22px";
-
-    settings.keyboard.left = 24;
-    settings.keyboard.top = null;
-
-    if (save) saveSettings();
-  }
-
-  function restoreKeyboardPosition() {
-    if (window.innerWidth <= 760) {
-      resetKeyboardPosition({ save: false });
+    if (!keyboard || keyboard.classList.contains("hidden")) {
+      document.documentElement.style.setProperty("--keyboard-offset", "0px");
       return;
     }
 
-    const keyboard = $("floatingKeyboard");
-
-    if (Number.isFinite(settings.keyboard?.top)) {
-      const maxLeft = Math.max(4, window.innerWidth - keyboard.offsetWidth - 4);
-      const maxTop = Math.max(74, window.innerHeight - keyboard.offsetHeight - 4);
-
-      const left = Math.min(Math.max(4, settings.keyboard.left ?? 24), maxLeft);
-      const top = Math.min(Math.max(74, settings.keyboard.top), maxTop);
-
-      keyboard.style.left = `${left}px`;
-      keyboard.style.top = `${top}px`;
-      keyboard.style.bottom = "auto";
-    } else {
-      resetKeyboardPosition({ save: false });
-    }
+    requestAnimationFrame(() => {
+      const height = keyboard.getBoundingClientRect().height;
+      document.documentElement.style.setProperty(
+        "--keyboard-offset",
+        `${Math.ceil(height + (window.innerWidth <= 760 ? 0 : 12))}px`
+      );
+    });
   }
 
-  function setupStableKeyboardDragging() {
+  async function setKeyboardVisible(visible, { save = true } = {}) {
     const keyboard = $("floatingKeyboard");
-    const handle = $("keyboardHandle");
+    keyboard.classList.toggle("hidden", !visible);
 
-    let pointerId = null;
-    let startPointerX = 0;
-    let startPointerY = 0;
-    let startLeft = 0;
-    let startTop = 0;
-    let moved = false;
+    settings.keyboard.visible = visible;
 
-    const DRAG_THRESHOLD = 7;
+    if (save) {
+      await saveSettings();
+    }
 
-    handle.addEventListener("pointerdown", (event) => {
-      if (window.innerWidth <= 760) return;
-      if (event.target.closest("button")) return;
-
-      const rect = keyboard.getBoundingClientRect();
-
-      pointerId = event.pointerId;
-      startPointerX = event.clientX;
-      startPointerY = event.clientY;
-      startLeft = rect.left;
-      startTop = rect.top;
-      moved = false;
-
-      handle.setPointerCapture(pointerId);
-    });
-
-    handle.addEventListener("pointermove", (event) => {
-      if (pointerId !== event.pointerId) return;
-
-      const dx = event.clientX - startPointerX;
-      const dy = event.clientY - startPointerY;
-
-      if (!moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) {
-        return;
-      }
-
-      moved = true;
-      keyboard.classList.add("dragging");
-
-      const maxLeft = Math.max(4, window.innerWidth - keyboard.offsetWidth - 4);
-      const maxTop = Math.max(74, window.innerHeight - keyboard.offsetHeight - 4);
-
-      const left = Math.min(Math.max(4, startLeft + dx), maxLeft);
-      const top = Math.min(Math.max(74, startTop + dy), maxTop);
-
-      keyboard.style.left = `${left}px`;
-      keyboard.style.top = `${top}px`;
-      keyboard.style.bottom = "auto";
-    });
-
-    const finishDrag = async (event) => {
-      if (pointerId !== event.pointerId) return;
-
-      if (moved) {
-        const rect = keyboard.getBoundingClientRect();
-
-        settings.keyboard.left = Math.round(rect.left);
-        settings.keyboard.top = Math.round(rect.top);
-
-        await saveSettings();
-      }
-
-      keyboard.classList.remove("dragging");
-      pointerId = null;
-      moved = false;
-
-      try {
-        handle.releasePointerCapture(event.pointerId);
-      } catch {}
-    };
-
-    handle.addEventListener("pointerup", finishDrag);
-    handle.addEventListener("pointercancel", finishDrag);
-
-    window.addEventListener("resize", () => {
-      restoreKeyboardPosition();
-    });
+    updateKeyboardOffset();
   }
 
   // -------------------------
@@ -1271,7 +1175,7 @@
         ...payload.settings,
         keyboard: {
           ...structuredClone(defaultSettings.keyboard),
-          ...(payload.settings.keyboard || payload.settings.keyboardPos || {})
+          ...(payload.settings.keyboard || {})
         }
       };
       await saveSettings();
@@ -1497,10 +1401,7 @@
       keyboard.classList.toggle("minimized");
       settings.keyboard.minimized = keyboard.classList.contains("minimized");
       await saveSettings();
-    });
-
-    $("keyboardResetBtn").addEventListener("click", () => {
-      resetKeyboardPosition();
+      updateKeyboardOffset();
     });
 
     // Settings
@@ -1595,6 +1496,8 @@
       }
     });
 
+    window.addEventListener("resize", updateKeyboardOffset);
+
     // Last-chance local save
     window.addEventListener("pagehide", () => {
       const doc = activeDocument();
@@ -1632,8 +1535,8 @@
     await loadDocuments();
 
     bindEvents();
-    setupStableKeyboardDragging();
     applySettings();
+    updateKeyboardOffset();
 
     renderDictionaryResults([], "");
     updateDerivedViews();

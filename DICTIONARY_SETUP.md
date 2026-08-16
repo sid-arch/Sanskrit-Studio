@@ -1,6 +1,6 @@
-# Dictionary Setup — Sanskrit Studio V10
+# Dictionary Setup — Sanskrit Studio V11
 
-V10 reads a local file named:
+V11 reads a local file named:
 
 `dictionary.json`
 
@@ -58,11 +58,11 @@ Do **one dictionary first**. Do not merge dozens of dictionaries on the first pa
 11. Push to GitHub.
 12. Reload Sanskrit Studio.
 
-V10 will automatically report the number of dictionary entries loaded.
+V11 will automatically report the number of dictionary entries loaded.
 
 ## Large-file optimization
 
-A very large dictionary may become slow on phones because the current V10 implementation loads the complete JSON file into memory.
+A very large dictionary may become slow on phones because the current V11 implementation loads the complete JSON file into memory.
 
 If the full dictionary becomes too large, the next optimization should be a chunked dictionary structure such as:
 

@@ -1,83 +1,80 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0b1020">
-<title>Sanskrit Studio V8</title>
-<link rel="stylesheet" href="styles.css">
-</head>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sanskrit Studio V9</title><link rel="stylesheet" href="styles.css"></head>
 <body>
 <header class="topbar">
-  <div class="brand"><div class="brand-mark">ॐ</div><div><h1>Sanskrit Studio</h1><p>V8 • Sanskrit typing workspace</p></div></div>
-  <div class="top-actions"><button id="themeBtn" class="icon-btn">☀</button><button id="clearBtn">Clear</button></div>
+  <div class="brand"><img src="FSL_logo.png" class="logo" onerror="this.style.display='none'"><div><h1>Sanskrit Studio</h1><small>V9 • Sanskrit writing workspace</small></div></div>
+  <div class="mainnav"><button id="navWrite" class="active">Write</button><button id="navDict">Dictionary</button></div>
+  <div class="actions"><span id="saveStatus">Saved locally ✓</span><button id="kbdBtn">⌨ Keyboard</button><button id="settingsBtn">⚙ Settings</button><button id="helpBtn">? Help</button></div>
 </header>
 
-<main class="workspace">
-  <section class="panel controls-panel">
-    <div class="mode-row">
-      <div class="field-group"><label>Input mode</label><select id="inputMode"><option>Direct Devanāgarī</option></select></div>
-      <div class="field-group"><label>Font size</label><select id="fontSize"><option>24</option><option selected>30</option><option>36</option><option>42</option><option>52</option></select></div>
-      <div class="tip">Typing-only • Runs entirely in your browser</div>
+<section id="writeView" class="view active">
+  <div class="docbar"><div id="docTabs" class="doctabs"></div><button id="newDoc">＋</button><button id="trashBtn">🗑 Trash</button><button id="historyBtn">↶ History</button></div>
+  <main class="workspace">
+    <div class="toolbar panel">
+      <button data-cmd="bold"><b>B</b></button><button data-cmd="italic"><i>I</i></button><button data-cmd="underline"><u>U</u></button>
+      <button id="highlightBtn">Highlight</button><button id="clearFmtBtn">Clear format</button>
+      <span class="sep"></span>
+      <button data-cmd="justifyLeft">Left</button><button data-cmd="justifyCenter">Center</button><button data-cmd="justifyRight">Right</button>
+      <button data-cmd="insertUnorderedList">• List</button><button data-cmd="insertOrderedList">1. List</button>
+      <select id="inputMode"><option value="direct">Direct Devanāgarī</option><option value="roman">Roman → Devanāgarī</option></select>
+      <span class="grow"></span><button id="lookupBtn">📖 Lookup</button><button id="focusBtn">⛶ Focus</button><button id="exportBtn">⇩ Export</button>
     </div>
-  </section>
 
-  <section class="editor-grid">
-    <article class="panel editor-panel">
-      <div class="panel-header">
-        <div><h2>Devanāgarī Editor</h2><p id="counts">0 characters • 0 words</p></div>
-        <div class="toolbar">
-          <button id="undoBtn" class="tiny">↶ Undo</button>
-          <button id="redoBtn" class="tiny">↷ Redo</button>
-          <button id="copyBtn" class="tiny">Copy</button>
-          <button id="findBtn" class="tiny">Find</button>
-        </div>
-      </div>
-      <textarea id="editor" spellcheck="false" placeholder="संस्कृतम् अत्र लिखत…"></textarea>
-      <div id="findBar" class="findbar hidden">
-        <input id="findInput" placeholder="Find…">
-        <input id="replaceInput" placeholder="Replace…">
-        <button id="replaceBtn" class="tiny">Replace</button>
-        <button id="replaceAllBtn" class="tiny">Replace all</button>
-        <button id="closeFindBtn" class="tiny">×</button>
-      </div>
-    </article>
-
-    <article class="panel side-panel">
-      <div class="panel-header"><div><h2>IAST View</h2><p>Updates automatically</p></div></div>
-      <textarea id="iastView" readonly placeholder="IAST transliteration appears here…"></textarea>
-
-      <div class="iast-tools">
-        <label for="iastInput">Convert IAST to Devanāgarī</label>
-        <textarea id="iastInput" class="mini-textarea" placeholder="ahaṃ paśyāmi"></textarea>
-        <div class="iast-actions"><button id="convertIASTBtn" class="primary">Insert as Devanāgarī</button><button id="clearIASTBtn">Clear</button></div>
-      </div>
-
-      <div class="export-box">
-        <h3>Export</h3>
-        <div class="export-grid">
-          <button data-export="txt">TXT</button>
-          <button data-export="doc">Word</button>
-          <button data-export="pdf">PDF</button>
-          <button data-export="csv">CSV</button>
-        </div>
-      </div>
-    </article>
-  </section>
-
-  <section class="panel keyboard-panel">
-    <div class="panel-header"><div><h2>Full Sanskrit Keyboard</h2><p>All core letters and signs visible at once</p></div></div>
-    <div class="keyboard-layout">
-      <div class="key-section"><h3>Vowels</h3><div class="keys" id="vowels"></div></div>
-      <div class="key-section consonant-section"><h3>Consonants</h3><div class="keys" id="consonants"></div></div>
-      <div class="key-section"><h3>Mātrās & Signs</h3><div class="keys" id="signs"></div></div>
-      <div class="key-section"><h3>Common Conjuncts</h3><div class="keys" id="conjuncts"></div></div>
-      <div class="key-section"><h3>Numbers & Punctuation</h3><div class="keys" id="numbers"></div></div>
+    <div id="romanPanel" class="panel roman hidden">
+      <div><b>Roman → Devanāgarī</b><small>Examples: ahaṃ paśyāmi • kṛṣṇaḥ • aa→ā • .r→ṛ • .s→ṣ • .m→ṃ</small></div>
+      <textarea id="romanInput" placeholder="Type Roman Sanskrit here"></textarea><div id="romanPreview" class="preview"></div>
+      <div><button id="romanInsert" class="primary">Insert</button><button id="romanReplace">Replace selection</button><button id="romanClear">Clear</button></div>
     </div>
-  </section>
 
-  <footer>Sanskrit Studio V8 • Typing only</footer>
-</main>
-<script src="app.js"></script>
-</body>
-</html>
+    <div class="editgrid">
+      <article class="panel editorpanel">
+        <div id="editor" class="editor" contenteditable="true" spellcheck="false" data-placeholder="संस्कृतम् अत्र लिखत…"></div>
+        <div class="statusbar"><span id="stats">0 words • 0 characters</span><span>Autosaves locally</span></div>
+      </article>
+      <aside id="iastPane" class="panel iast"><div class="panehead"><div><b>IAST View</b><small>Live transliteration</small></div><button id="copyIAST">Copy</button></div><textarea id="iastView" readonly></textarea></aside>
+    </div>
+  </main>
+</section>
+
+<section id="dictView" class="view"><main class="dictwrap">
+  <div class="panel dictsearch"><h2>Dictionary</h2><p>Search in Devanāgarī or IAST.</p><div><input id="dictQuery" placeholder="धर्म / dharma"><button id="dictSearch" class="primary">Search</button></div><small id="dictMeta"></small></div>
+  <div id="dictResults" class="results"></div>
+</main></section>
+
+<div id="keyboard" class="floating">
+  <div id="dragHandle" class="floathead"><b>Sanskrit Keyboard</b><span><button id="minKbd">—</button><button id="closeKbd">×</button></span></div>
+  <div id="kbdBody"><div class="recent"><small>Recent</small><div id="recentKeys"></div></div><div id="keyGroups" class="keygroups"></div></div>
+</div>
+
+<div id="contextMenu" class="context hidden"><button id="ctxLookup">📖 Look up selected word</button><button id="ctxCopy">Copy</button></div>
+<div id="backdrop" class="backdrop hidden"></div>
+
+<div id="settingsModal" class="modal hidden"><div class="mhead"><h2>Settings</h2><button data-close>×</button></div>
+<label>Theme <select id="themeSet"><option value="dark">Dark</option><option value="light">Light</option><option value="paper">Paper</option></select></label>
+<label>Default input <select id="inputSet"><option value="direct">Direct Devanāgarī</option><option value="roman">Roman → Devanāgarī</option></select></label>
+<label><input id="iastSet" type="checkbox" checked> Show IAST panel</label>
+<label><input id="kbdSet" type="checkbox" checked> Open keyboard at startup</label>
+<div class="modalActions"><button id="exportWorkspace">Export Workspace</button><label class="fileBtn">Import Workspace<input id="importWorkspace" type="file" accept=".json" hidden></label></div>
+<p class="note">Documents are stored in IndexedDB on this browser/device. Export a backup occasionally.</p></div>
+
+<div id="trashModal" class="modal hidden"><div class="mhead"><h2>Recently Deleted</h2><button data-close>×</button></div><div id="trashList"></div></div>
+<div id="historyModal" class="modal hidden"><div class="mhead"><h2>Document History</h2><button data-close>×</button></div><div id="historyList"></div></div>
+<div id="exportModal" class="modal hidden"><div class="mhead"><h2>Export Document</h2><button data-close>×</button></div><div class="exportGrid"><button data-export="txt">TXT</button><button data-export="html">HTML</button><button data-export="doc">Word-compatible DOC</button><button data-export="pdf">Print / PDF</button></div></div>
+
+<aside id="helpDrawer" class="help">
+  <div class="mhead"><div><h2>How to Use</h2><small>Everything in V9</small></div><button id="closeHelp">×</button></div><input id="helpSearch" placeholder="Search the guide…">
+  <div id="helpContent">
+    <section><h3>Documents</h3><p>Press ＋ to create documents. Double-click a tab name to rename it. Closing a tab sends it to Trash.</p></section>
+    <section><h3>Saving</h3><p>V9 stores documents in IndexedDB. They survive reloads, hard reloads, closing Chrome, and restarting the same device. Cross-device sync is not automatic.</p></section>
+    <section><h3>Formatting</h3><p>Select text, then use Bold, Italic, Underline, Highlight, alignment, and list controls. Ctrl/Cmd+B, I and U also work.</p></section>
+    <section><h3>Roman → Devanāgarī</h3><p>Choose Roman → Devanāgarī. Examples: <code>ahaṃ paśyāmi → अहं पश्यामि</code>, <code>kṛṣṇaḥ → कृष्णः</code>. Easy aliases include aa, ii, uu, .r, .n, .s, .m and .h.</p></section>
+    <section><h3>Floating Keyboard</h3><p>Drag the keyboard by its title bar. Minimize or close it, then reopen with ⌨ Keyboard. Recent characters stay at the top.</p></section>
+    <section><h3>Dictionary</h3><p>Search in Devanāgarī or IAST. Select a word in Write and press Lookup, or right-click the selection. Dictionary results can be inserted directly into the active document.</p></section>
+    <section><h3>Trash & History</h3><p>Trash lets you restore deleted documents. History stores automatic snapshots and lets you restore older content.</p></section>
+    <section><h3>Workspace Backup</h3><p>Settings → Export Workspace creates one JSON backup containing documents, trash, history and settings. Import Workspace restores it.</p></section>
+    <section><h3>Keyboard Shortcuts</h3><p>Ctrl/Cmd+B bold • I italic • U underline • Z undo • Shift+Z redo • S save • N new document • K toggle Sanskrit keyboard • Shift+D selected-word dictionary lookup.</p></section>
+    <section><h3>Branding</h3><p>Put <code>FSL_logo.png</code> in the same folder as index.html. It appears in the header and footer automatically.</p></section>
+  </div>
+</aside>
+
+<footer><img src="FSL_logo.png" onerror="this.style.display='none'">Built by <b>For the Love of Samskritam</b></footer>
+<script src="app.js"></script></body></html>

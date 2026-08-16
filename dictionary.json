@@ -1,0 +1,121 @@
+[
+  {
+    "word": "अहम्",
+    "iast": "aham",
+    "meaning": "I; first-person singular pronoun.",
+    "grammar": "pronoun",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "त्वम्",
+    "iast": "tvam",
+    "meaning": "you; second-person singular pronoun.",
+    "grammar": "pronoun",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "पश्यामि",
+    "iast": "paśyāmi",
+    "meaning": "I see.",
+    "grammar": "verb form",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "गच्छति",
+    "iast": "gacchati",
+    "meaning": "he/she/it goes.",
+    "grammar": "verb form",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "धर्म",
+    "iast": "dharma",
+    "meaning": "duty, law, right conduct, principle, virtue; context-dependent.",
+    "grammar": "noun",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "कर्म",
+    "iast": "karma",
+    "meaning": "action, work, deed; also result/effect of action depending on context.",
+    "grammar": "noun",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "ज्ञान",
+    "iast": "jñāna",
+    "meaning": "knowledge, understanding.",
+    "grammar": "noun",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "विद्या",
+    "iast": "vidyā",
+    "meaning": "knowledge, learning, science.",
+    "grammar": "noun",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "गुरु",
+    "iast": "guru",
+    "meaning": "teacher; heavy, important.",
+    "grammar": "noun/adjective",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "शिष्य",
+    "iast": "śiṣya",
+    "meaning": "student, pupil, disciple.",
+    "grammar": "noun",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "राम",
+    "iast": "rāma",
+    "meaning": "pleasing, charming; also the proper name Rāma.",
+    "grammar": "adjective/proper noun",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "कृष्ण",
+    "iast": "kṛṣṇa",
+    "meaning": "dark, black; also the proper name Kṛṣṇa.",
+    "grammar": "adjective/proper noun",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "सुख",
+    "iast": "sukha",
+    "meaning": "happiness, ease, comfort.",
+    "grammar": "noun/adjective",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "दुःख",
+    "iast": "duḥkha",
+    "meaning": "suffering, pain, difficulty.",
+    "grammar": "noun",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "शान्ति",
+    "iast": "śānti",
+    "meaning": "peace, calm, tranquility.",
+    "grammar": "noun",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "नमः",
+    "iast": "namaḥ",
+    "meaning": "salutation, reverence, homage.",
+    "grammar": "indeclinable usage",
+    "source": "Sanskrit Studio starter lexicon"
+  },
+  {
+    "word": "संस्कृतम्",
+    "iast": "saṃskṛtam",
+    "meaning": "Sanskrit; refined, perfected, prepared.",
+    "grammar": "noun/adjective",
+    "source": "Sanskrit Studio starter lexicon"
+  }
+]

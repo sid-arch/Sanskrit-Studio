@@ -1662,3 +1662,21 @@ textarea:focus-visible,
     width: 100%;
   }
 }
+
+
+/* V13 concise-definition polish */
+.dictionary-concise {
+  max-width: 860px;
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.5;
+  letter-spacing: -.006em;
+}
+
+.dictionary-full-entry summary {
+  user-select: none;
+}
+
+.dictionary-full-entry[open] summary {
+  margin-bottom: 8px;
+}

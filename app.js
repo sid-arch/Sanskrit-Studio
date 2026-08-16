@@ -49,7 +49,7 @@
   // CONSTANTS / STATE
   // -------------------------
   const DB_NAME = "SanskritStudio";
-  const DB_VERSION = 12;
+  const DB_VERSION = 13;
   const SNAPSHOT_MIN_INTERVAL = 45_000;
   const MAX_HISTORY_PER_DOCUMENT = 30;
   const SAVE_DELAY = 350;
@@ -1050,46 +1050,97 @@
 
   function isCrossReferenceSense(text) {
     const value = String(text || "").trim();
-    return /^(?:see\b|cf\.\b|q\.v\.\b|id\.\b|for\b|\(?in comp\.|the same as\b)/i.test(value);
+    return /^(?:see\b|cf\.\b|q\.v\.\b|id\.\b|for\b|the same as\b|=+\s*[-A-Za-zāīūṛṝḷḹṅñṭḍṇśṣṃḥ])/i.test(value);
+  }
+
+  function stripOuterQuotes(value) {
+    return String(value || "")
+      .trim()
+      .replace(/^[‘’'“"]+\s*/u, "")
+      .replace(/\s*[‘’'”"]+$/u, "")
+      .trim();
+  }
+
+  function cleanCitationTail(value) {
+    let text = String(value || "").trim();
+
+    // Cross-reference tails: "= -devata; iic, 12; VarYogay. v, 1."
+    text = text.replace(
+      /\s*[;,]?\s*=\s*[-A-Za-zāīūṛṝḷḹṅñṭḍṇśṣṃḥ0-9°'’—.–]+\b.*$/u,
+      ""
+    );
+
+    // MW technical abbreviations after the semantic definition.
+    text = text.replace(
+      /\s*[;,]\s*(?:iic|ifc|ib|id|q\.v|cf|opp|compar|superl|du|pl|sg|nom|acc|instr|dat|abl|gen|loc|voc|cl|P|Ā|Pass|Caus|Desid|Intens)\.?\b.*$/iu,
+      ""
+    );
+
+    // Common source abbreviations / text citations.
+    text = text.replace(
+      /\s*[;,]\s*(?:RV|AV|VS|TS|ŚBr|Br|Up|Mn|MBh|R|BhP|Yājñ|Suśr|Pāṇ|Pañcat|Kathās|Ragh|Megh|VarYogay|VarBṛS|Jyot|Śiś|Hit|Vikr|MaitrUp|ĀpŚr|Kauś|Nir|Bhaṭṭ|HPar|TāṇḍyaBr|Bhpr|RTL|Gmn|VBr|L|T)\b.*$/u,
+      ""
+    );
+
+    // Generic citation-like tails: "Author. v, 1" / "Work. 205".
+    text = text.replace(
+      /\s*[;,]\s*[A-ZĀĪŪṚṜḶḸŚṢṄÑṬḌṆ][A-Za-zĀĪŪṚṜḶḸŚṢṄÑṬḌṆāīūṛṝḷḹśṣṅñṭḍṇ]+\.?\s+(?:[ivxlcdm]+|\d+)(?:\s*,\s*\d+(?:-\d+)?)?.*$/u,
+      ""
+    );
+
+    // Trailing numeric references.
+    text = text.replace(/\s*[;,]\s*\d+(?:\s*[-–]\s*\d+)?\s*\.?$/u, "");
+
+    return text.trim();
   }
 
   function cleanMWSense(text) {
     let value = String(text || "")
       .replace(/\s+/g, " ")
+      .replace(/\u00a0/g, " ")
       .trim();
 
     if (!value) return "";
 
-    // Remove a headword echo at the beginning, e.g. "guru—tva ..."
-    value = value.replace(/^[A-Za-zāīūṛṝḷḹṅñṭḍṇśṣṃḥ'°—\-\/\s]+—[A-Za-zāīūṛṝḷḹṅñṭḍṇśṣṃḥ'°—\-\/\s]+\s+/u, "");
+    // Remove leading headword-compound echo.
+    value = value.replace(
+      /^[A-Za-zāīūṛṝḷḹṅñṭḍṇśṣṃḥ'°—\-\/\s]+—[A-Za-zāīūṛṝḷḹṅñṭḍṇśṣṃḥ'°—\-\/\s]+\s+/u,
+      ""
+    );
 
-    // Drop one or more leading reference/etymology parentheses.
+    // Remove leading scholarly parentheticals.
     for (let i = 0; i < 3; i++) {
-      const next = value.replace(/^\([^)]{1,180}\)\s*/u, "").trim();
-      if (next === value) break;
+      const next = value.replace(/^\([^)]{1,220}\)\s*/u, "").trim();
+      if (next == value) break;
       value = next;
     }
 
-    // Remove square-bracket etymological tails.
-    value = value.replace(/\s*\[[^\]]{1,500}\]\s*$/u, "").trim();
+    // Remove trailing etymology block.
+    value = value.replace(/\s*\[[^\]]{1,700}\]\s*$/u, "").trim();
 
-    // Strip the most common Monier-Williams source-citation tail.
-    // Keeps the semantic text before things such as ", RV.; MBh. &c."
-    value = value.replace(
-      /,\s*(?:RV|AV|VS|TS|ŚBr|Br|Up|Mn|MBh|R|BhP|Yājñ|Suśr|Pāṇ|Pañcat|Kathās|Ragh|Megh|VarBṛS|Jyot|L|T|Śrut|Prāt|RPrāt|ĀśvGṛ|PārGṛ|Gobh|ŚāṅkhGṛ|Cāṇ|SŚaṃkar|Jain|Hit|Vikr)\b.*$/u,
-      ""
-    ).trim();
+    value = cleanCitationTail(value);
+    value = stripOuterQuotes(value);
 
-    // Remove a trailing generic lexicographic citation.
-    value = value.replace(/,\s*(?:L|T)\.\s*$/u, "").trim();
-
-    // Trim punctuation/spacing.
     value = value
-      .replace(/^[,;:\s]+/, "")
-      .replace(/[\s,;:]+$/, "")
+      .replace(/^[,;:=\s]+/u, "")
+      .replace(/[\s,;:=]+$/u, "")
       .trim();
 
+    if (/^(?:iic|ifc|ib|id|cf|q\.v|L|T)\.?$/i.test(value)) return "";
+
     return value;
+  }
+
+  function sentenceCaseMeaning(value) {
+    let text = stripOuterQuotes(String(value || "").trim());
+    if (!text) return "";
+
+    if (/^[a-z]/.test(text)) {
+      text = text[0].toUpperCase() + text.slice(1);
+    }
+
+    if (!/[.!?…]$/.test(text)) text += ".";
+    return text;
   }
 
   function readableGrammar(grammar) {
@@ -1136,49 +1187,53 @@
       .filter(value => !/^N\.\s+of\b/i.test(value))
       .filter(value => !/^\[?cf\./i.test(value));
 
-    const candidates = cleaned.length
-      ? cleaned
-      : sourceSenses.map(cleanMWSense).filter(Boolean);
+    const fallback = sourceSenses.map(cleanMWSense).filter(Boolean);
+    const candidates = cleaned.length ? cleaned : fallback;
 
     if (!candidates.length) {
       return "See the full Monier-Williams entry below.";
     }
 
-    // Prefer readable, standalone senses rather than long technical notes.
     const scored = candidates.map((value, index) => {
-      let score = 100 - index * 2;
+      let score = 120 - index * 2;
       const len = value.length;
 
-      if (len >= 12 && len <= 120) score += 35;
-      else if (len <= 180) score += 20;
-      else if (len > 280) score -= 35;
+      if (len >= 8 && len <= 90) score += 45;
+      else if (len <= 140) score += 30;
+      else if (len <= 210) score += 12;
+      else if (len > 300) score -= 45;
 
-      if (/^(?:a |an |the |to |one who |having |free from |teacher|knowledge|action|peace|fire|self|soul|heavy|venerable)/i.test(value)) score += 12;
-      if (/\b(?:RV|AV|MBh|Pāṇ|ŚBr|Suśr|Yājñ)\b/u.test(value)) score -= 20;
-      if (/[;]{2,}/.test(value)) score -= 10;
+      if (/^(?:a |an |the |to |one who |having |free from |teacher|knowledge|action|peace|fire|self|soul|heavy|venerable|name of|constellation)/i.test(value)) {
+        score += 12;
+      }
+
+      if (/\b(?:RV|AV|MBh|Pāṇ|ŚBr|Suśr|Yājñ|VarYogay|Pañcat|Ragh)\b/u.test(value)) score -= 35;
+      if (/=\s*[-A-Za-z]/u.test(value)) score -= 60;
+      if (/\biic\b|\bifc\b|\bq\.v\b/i.test(value)) score -= 60;
 
       return { value, score };
     }).sort((a, b) => b.score - a.score);
 
-    const selected = [];
-    for (const item of scored) {
-      const normalized = item.value.toLowerCase();
-      if (selected.some(existing => existing.toLowerCase() === normalized)) continue;
-      selected.push(item.value);
-      if (selected.length >= 2) break;
+    let result = scored[0]?.value || "";
+
+    if (result.length > 170) {
+      const boundaries = [
+        result.indexOf("; ", 70),
+        result.indexOf(", also ", 70),
+        result.indexOf(", especially ", 70),
+        result.indexOf(" (", 70)
+      ].filter(i => i > 70);
+
+      if (boundaries.length) result = result.slice(0, Math.min(...boundaries));
     }
 
-    let result = selected.join("; ");
-
-    if (result.length > 220) {
-      const clipped = result.slice(0, 217);
+    if (result.length > 190) {
+      const clipped = result.slice(0, 187);
       const lastSpace = clipped.lastIndexOf(" ");
-      result = `${clipped.slice(0, Math.max(80, lastSpace))}…`;
+      result = `${clipped.slice(0, Math.max(90, lastSpace))}…`;
     }
 
-    if (result && !/[.!?…]$/.test(result)) result += ".";
-
-    return result;
+    return sentenceCaseMeaning(result);
   }
 
   function scoreDictionaryEntry(entry, query) {

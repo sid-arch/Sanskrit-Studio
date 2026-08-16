@@ -1,13 +1,13 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sanskrit Studio V9</title><link rel="stylesheet" href="styles.css"></head>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sanskrit Studio V10</title><link rel="stylesheet" href="styles.css"></head>
 <body>
 <header class="topbar">
-  <div class="brand"><img src="FSL_logo.png" class="logo" onerror="this.style.display='none'"><div><h1>Sanskrit Studio</h1><small>V9 • Sanskrit writing workspace</small></div></div>
+  <div class="brand"><img src="FSL_logo.png" class="logo" onerror="this.style.display='none'"><div><h1>Sanskrit Studio</h1><small>V10 • Sanskrit writing workspace</small></div></div>
   <div class="mainnav"><button id="navWrite" class="active">Write</button><button id="navDict">Dictionary</button></div>
-  <div class="actions"><span id="saveStatus">Saved locally ✓</span><button id="kbdBtn">⌨ Keyboard</button><button id="settingsBtn">⚙ Settings</button><button id="helpBtn">? Help</button></div>
+  <div class="actions"><span id="saveStatus">Saved locally ✓</span><button id="kbdBtn" title="Keyboard">⌨ <span>Keyboard</span></button><button id="settingsBtn" title="Settings">⚙ <span>Settings</span></button><button id="helpBtn" title="Help">? <span>Help</span></button></div>
 </header>
 
 <section id="writeView" class="view active">
-  <div class="docbar"><div id="docTabs" class="doctabs"></div><button id="newDoc">＋</button><button id="trashBtn">🗑 Trash</button><button id="historyBtn">↶ History</button></div>
+  <div class="docbar"><div id="docTabs" class="doctabs"></div><button id="newDoc">＋</button><button id="trashBtn" title="Recently Deleted">⌫ <span>Trash</span></button><button id="historyBtn" title="Document History">↺ <span>History</span></button></div>
   <main class="workspace">
     <div class="toolbar panel">
       <button data-cmd="bold"><b>B</b></button><button data-cmd="italic"><i>I</i></button><button data-cmd="underline"><u>U</u></button>
@@ -16,7 +16,7 @@
       <button data-cmd="justifyLeft">Left</button><button data-cmd="justifyCenter">Center</button><button data-cmd="justifyRight">Right</button>
       <button data-cmd="insertUnorderedList">• List</button><button data-cmd="insertOrderedList">1. List</button>
       <select id="inputMode"><option value="direct">Direct Devanāgarī</option><option value="roman">Roman → Devanāgarī</option></select>
-      <span class="grow"></span><button id="lookupBtn">📖 Lookup</button><button id="focusBtn">⛶ Focus</button><button id="exportBtn">⇩ Export</button>
+      <span class="grow"></span><button id="lookupBtn" title="Dictionary lookup">⌕ <span>Lookup</span></button><button id="exportBtn" title="Export document">⇩ <span>Export</span></button>
     </div>
 
     <div id="romanPanel" class="panel roman hidden">
@@ -42,10 +42,10 @@
 
 <div id="keyboard" class="floating">
   <div id="dragHandle" class="floathead"><b>Sanskrit Keyboard</b><span><button id="minKbd">—</button><button id="closeKbd">×</button></span></div>
-  <div id="kbdBody"><div class="recent"><small>Recent</small><div id="recentKeys"></div></div><div id="keyGroups" class="keygroups"></div></div>
+  <div id="kbdBody"><div id="keyGroups" class="keygroups"></div></div>
 </div>
 
-<div id="contextMenu" class="context hidden"><button id="ctxLookup">📖 Look up selected word</button><button id="ctxCopy">Copy</button></div>
+<div id="contextMenu" class="context hidden"><button id="ctxLookup">⌕ Look up selected word</button><button id="ctxCopy">Copy</button></div>
 <div id="backdrop" class="backdrop hidden"></div>
 
 <div id="settingsModal" class="modal hidden"><div class="mhead"><h2>Settings</h2><button data-close>×</button></div>
@@ -61,13 +61,13 @@
 <div id="exportModal" class="modal hidden"><div class="mhead"><h2>Export Document</h2><button data-close>×</button></div><div class="exportGrid"><button data-export="txt">TXT</button><button data-export="html">HTML</button><button data-export="doc">Word-compatible DOC</button><button data-export="pdf">Print / PDF</button></div></div>
 
 <aside id="helpDrawer" class="help">
-  <div class="mhead"><div><h2>How to Use</h2><small>Everything in V9</small></div><button id="closeHelp">×</button></div><input id="helpSearch" placeholder="Search the guide…">
+  <div class="mhead"><div><h2>How to Use</h2><small>Everything in V10</small></div><button id="closeHelp">×</button></div><input id="helpSearch" placeholder="Search the guide…">
   <div id="helpContent">
     <section><h3>Documents</h3><p>Press ＋ to create documents. Double-click a tab name to rename it. Closing a tab sends it to Trash.</p></section>
-    <section><h3>Saving</h3><p>V9 stores documents in IndexedDB. They survive reloads, hard reloads, closing Chrome, and restarting the same device. Cross-device sync is not automatic.</p></section>
+    <section><h3>Saving</h3><p>V10 stores documents in IndexedDB. They survive reloads, hard reloads, closing Chrome, and restarting the same device. Cross-device sync is not automatic.</p></section>
     <section><h3>Formatting</h3><p>Select text, then use Bold, Italic, Underline, Highlight, alignment, and list controls. Ctrl/Cmd+B, I and U also work.</p></section>
     <section><h3>Roman → Devanāgarī</h3><p>Choose Roman → Devanāgarī. Examples: <code>ahaṃ paśyāmi → अहं पश्यामि</code>, <code>kṛṣṇaḥ → कृष्णः</code>. Easy aliases include aa, ii, uu, .r, .n, .s, .m and .h.</p></section>
-    <section><h3>Floating Keyboard</h3><p>Drag the keyboard by its title bar. Minimize or close it, then reopen with ⌨ Keyboard. Recent characters stay at the top.</p></section>
+    <section><h3>Floating Keyboard</h3><p>The keyboard opens as a stable floating panel. Drag it only from the dedicated grip in its title bar, minimize or close it, then reopen it with Keyboard. Its position is remembered and kept inside the visible screen.</p></section>
     <section><h3>Dictionary</h3><p>Search in Devanāgarī or IAST. Select a word in Write and press Lookup, or right-click the selection. Dictionary results can be inserted directly into the active document.</p></section>
     <section><h3>Trash & History</h3><p>Trash lets you restore deleted documents. History stores automatic snapshots and lets you restore older content.</p></section>
     <section><h3>Workspace Backup</h3><p>Settings → Export Workspace creates one JSON backup containing documents, trash, history and settings. Import Workspace restores it.</p></section>

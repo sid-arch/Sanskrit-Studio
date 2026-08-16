@@ -49,7 +49,7 @@
   // CONSTANTS / STATE
   // -------------------------
   const DB_NAME = "SanskritStudio";
-  const DB_VERSION = 11;
+  const DB_VERSION = 12;
   const SNAPSHOT_MIN_INTERVAL = 45_000;
   const MAX_HISTORY_PER_DOCUMENT = 30;
   const SAVE_DELAY = 350;
@@ -60,6 +60,12 @@
   let dictionaryEntries = []; // starter fallback only
   let dictionaryManifest = null;
   const dictionaryChunkCache = new Map();
+
+  // V12 dictionary result state
+  let dictionarySearchResults = [];
+  let dictionarySearchQuery = "";
+  let dictionaryVisibleCount = 20;
+  const DICTIONARY_PAGE_SIZE = 20;
   let lastEditorRange = null;
   let saveTimer = null;
   let lastSnapshotTime = 0;
@@ -1001,58 +1007,293 @@
       .replace(/[।॥,.;:!?'"“”‘’()[\]{}]/g, "");
   }
 
-  function scoreDictionaryEntry(entry, query) {
+  // V12: common-word overrides provide a clean learner-friendly
+  // definition while the full Monier-Williams senses remain available below.
+  const COMMON_CONCISE_DEFINITIONS = {
+    "गुरु": "Teacher, mentor, or spiritual guide; also heavy, weighty, important, or venerable.",
+    "धर्म": "Duty, law, right conduct, moral order, or an essential principle.",
+    "कर्म": "Action, deed, or work; also the result or consequence of an action.",
+    "कर्मन्": "Action, deed, work, or activity; also the result or consequence of action.",
+    "विद्या": "Knowledge, learning, study, or a branch of knowledge.",
+    "ज्ञान": "Knowledge, understanding, awareness, or insight.",
+    "योग": "Union, joining, discipline, or a spiritual practice aimed at integration and realization.",
+    "शान्ति": "Peace, calm, tranquility, or freedom from disturbance.",
+    "सुख": "Happiness, ease, comfort, pleasure, or well-being.",
+    "दुःख": "Suffering, pain, difficulty, sorrow, or unhappiness.",
+    "राम": "Pleasing or charming; also the proper name Rāma.",
+    "कृष्ण": "Dark or black; also the proper name Kṛṣṇa.",
+    "अग्नि": "Fire; especially the sacred fire and the Vedic deity Agni.",
+    "आत्मन्": "Self, soul, individual essence, or inner principle.",
+    "ब्रह्मन्": "The Absolute or ultimate reality; also sacred formulation, prayer, or spiritual power depending on context.",
+    "नमः": "Salutation, reverence, homage, or an expression of bowing.",
+    "संस्कृत": "Refined, perfected, or prepared; also referring to the Sanskrit language.",
+    "संस्कृतम्": "Sanskrit; literally refined, perfected, or prepared.",
+    "शिष्य": "Student, pupil, or disciple.",
+    "पुस्तक": "Book or written volume."
+  };
+
+  function normalizeDictionaryRoman(value) {
+    return normalizeRoman(String(value || "").toLowerCase())
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function dictionaryExactForms(query) {
     const raw = cleanDictionaryQuery(query);
-    if (!raw) return 0;
-
-    const lower = normalizeRoman(raw.toLowerCase());
-    const devanagariQuery = /[\u0900-\u097F]/.test(raw)
+    const roman = normalizeDictionaryRoman(raw);
+    const deva = /[\u0900-\u097F]/.test(raw)
       ? raw
-      : romanToDevanagari(lower);
+      : romanToDevanagari(roman);
 
-    const word = String(entry.word || "").trim();
-    const iast = String(entry.iast || devanagariToIast(word)).toLowerCase();
-    const meaning = String(entry.meaning || "").toLowerCase();
+    return { raw, roman, deva };
+  }
 
-    let score = 0;
+  function isCrossReferenceSense(text) {
+    const value = String(text || "").trim();
+    return /^(?:see\b|cf\.\b|q\.v\.\b|id\.\b|for\b|\(?in comp\.|the same as\b)/i.test(value);
+  }
 
-    if (word === devanagariQuery || iast === lower) score = 100;
-    else if (word.startsWith(devanagariQuery) || iast.startsWith(lower)) score = 82;
-    else if (word.includes(devanagariQuery) || iast.includes(lower)) score = 62;
-    else if (!dictionaryManifest && meaning.includes(raw.toLowerCase())) score = 22;
+  function cleanMWSense(text) {
+    let value = String(text || "")
+      .replace(/\s+/g, " ")
+      .trim();
 
-    if (score === 100 && /^(?:see\b|\(in comp\.|for\b)/i.test(String(entry.meaning || "").trim())) {
-      score = 70;
+    if (!value) return "";
+
+    // Remove a headword echo at the beginning, e.g. "guru—tva ..."
+    value = value.replace(/^[A-Za-zāīūṛṝḷḹṅñṭḍṇśṣṃḥ'°—\-\/\s]+—[A-Za-zāīūṛṝḷḹṅñṭḍṇśṣṃḥ'°—\-\/\s]+\s+/u, "");
+
+    // Drop one or more leading reference/etymology parentheses.
+    for (let i = 0; i < 3; i++) {
+      const next = value.replace(/^\([^)]{1,180}\)\s*/u, "").trim();
+      if (next === value) break;
+      value = next;
     }
 
-    return score;
+    // Remove square-bracket etymological tails.
+    value = value.replace(/\s*\[[^\]]{1,500}\]\s*$/u, "").trim();
+
+    // Strip the most common Monier-Williams source-citation tail.
+    // Keeps the semantic text before things such as ", RV.; MBh. &c."
+    value = value.replace(
+      /,\s*(?:RV|AV|VS|TS|ŚBr|Br|Up|Mn|MBh|R|BhP|Yājñ|Suśr|Pāṇ|Pañcat|Kathās|Ragh|Megh|VarBṛS|Jyot|L|T|Śrut|Prāt|RPrāt|ĀśvGṛ|PārGṛ|Gobh|ŚāṅkhGṛ|Cāṇ|SŚaṃkar|Jain|Hit|Vikr)\b.*$/u,
+      ""
+    ).trim();
+
+    // Remove a trailing generic lexicographic citation.
+    value = value.replace(/,\s*(?:L|T)\.\s*$/u, "").trim();
+
+    // Trim punctuation/spacing.
+    value = value
+      .replace(/^[,;:\s]+/, "")
+      .replace(/[\s,;:]+$/, "")
+      .trim();
+
+    return value;
+  }
+
+  function readableGrammar(grammar) {
+    const raw = String(grammar || "").trim();
+    if (!raw) return "";
+
+    const labels = [];
+
+    if (/\bind\./i.test(raw)) labels.push("indeclinable");
+    if (/\bmfn\./i.test(raw) || /\bmf\([^)]*\)n\./i.test(raw)) labels.push("adjective");
+    if (/(^|[;\s])m\./i.test(raw) && !labels.includes("adjective")) labels.push("masculine noun");
+    if (/(^|[;\s])f\./i.test(raw) && !labels.includes("adjective")) labels.push("feminine noun");
+    if (/(^|[;\s])n\./i.test(raw) && !labels.includes("adjective")) labels.push("neuter noun");
+    if (/\bverb\b/i.test(raw)) labels.push("verb");
+
+    const unique = [...new Set(labels)];
+
+    if (unique.length) return unique.slice(0, 2).join(" · ");
+
+    // MW grammar is sometimes highly technical. Show a short cleaned fallback.
+    return raw
+      .replace(/\binh\b;?/gi, "")
+      .replace(/\s*;\s*/g, " · ")
+      .replace(/\s+/g, " ")
+      .replace(/^[·\s]+|[·\s]+$/g, "")
+      .slice(0, 90);
+  }
+
+  function conciseMeaningForEntry(entry) {
+    const word = String(entry.word || "").trim();
+
+    if (COMMON_CONCISE_DEFINITIONS[word]) {
+      return COMMON_CONCISE_DEFINITIONS[word];
+    }
+
+    const sourceSenses = Array.isArray(entry.senses) && entry.senses.length
+      ? entry.senses
+      : [entry.meaning];
+
+    const cleaned = sourceSenses
+      .map(cleanMWSense)
+      .filter(Boolean)
+      .filter(value => !isCrossReferenceSense(value))
+      .filter(value => !/^N\.\s+of\b/i.test(value))
+      .filter(value => !/^\[?cf\./i.test(value));
+
+    const candidates = cleaned.length
+      ? cleaned
+      : sourceSenses.map(cleanMWSense).filter(Boolean);
+
+    if (!candidates.length) {
+      return "See the full Monier-Williams entry below.";
+    }
+
+    // Prefer readable, standalone senses rather than long technical notes.
+    const scored = candidates.map((value, index) => {
+      let score = 100 - index * 2;
+      const len = value.length;
+
+      if (len >= 12 && len <= 120) score += 35;
+      else if (len <= 180) score += 20;
+      else if (len > 280) score -= 35;
+
+      if (/^(?:a |an |the |to |one who |having |free from |teacher|knowledge|action|peace|fire|self|soul|heavy|venerable)/i.test(value)) score += 12;
+      if (/\b(?:RV|AV|MBh|Pāṇ|ŚBr|Suśr|Yājñ)\b/u.test(value)) score -= 20;
+      if (/[;]{2,}/.test(value)) score -= 10;
+
+      return { value, score };
+    }).sort((a, b) => b.score - a.score);
+
+    const selected = [];
+    for (const item of scored) {
+      const normalized = item.value.toLowerCase();
+      if (selected.some(existing => existing.toLowerCase() === normalized)) continue;
+      selected.push(item.value);
+      if (selected.length >= 2) break;
+    }
+
+    let result = selected.join("; ");
+
+    if (result.length > 220) {
+      const clipped = result.slice(0, 217);
+      const lastSpace = clipped.lastIndexOf(" ");
+      result = `${clipped.slice(0, Math.max(80, lastSpace))}…`;
+    }
+
+    if (result && !/[.!?…]$/.test(result)) result += ".";
+
+    return result;
+  }
+
+  function scoreDictionaryEntry(entry, query) {
+    const { raw, roman, deva } = dictionaryExactForms(query);
+    if (!raw) return 0;
+
+    const word = String(entry.word || "").trim();
+    const iast = normalizeDictionaryRoman(entry.iast || devanagariToIast(word));
+    const slp1 = String(entry.slp1 || "").toLowerCase();
+
+    // Exact matches are intentionally separated by thousands of points.
+    // A compound can never outrank the actual searched headword.
+    if (word === deva) return 10000;
+    if (iast === roman) return 9900;
+    if (slp1 && slp1 === raw.toLowerCase()) return 9800;
+
+    if (word.startsWith(deva) && deva) {
+      return 6000 - Math.min(500, Array.from(word).length - Array.from(deva).length);
+    }
+
+    if (iast.startsWith(roman) && roman) {
+      return 5800 - Math.min(500, iast.length - roman.length);
+    }
+
+    if (word.includes(deva) && deva) {
+      return 3000 - Math.min(400, Array.from(word).length - Array.from(deva).length);
+    }
+
+    if (iast.includes(roman) && roman) {
+      return 2800 - Math.min(400, iast.length - roman.length);
+    }
+
+    if (!dictionaryManifest) {
+      const meaning = String(entry.meaning || "").toLowerCase();
+      if (meaning.includes(raw.toLowerCase())) return 500;
+    }
+
+    return 0;
+  }
+
+  function dictionaryTieBreak(a, b, query) {
+    if (b.score !== a.score) return b.score - a.score;
+
+    const forms = dictionaryExactForms(query);
+    const aWord = String(a.entry.word || "");
+    const bWord = String(b.entry.word || "");
+
+    // For exact duplicate/homonym records, richer definitions come first.
+    const aExact = aWord === forms.deva || normalizeDictionaryRoman(a.entry.iast) === forms.roman;
+    const bExact = bWord === forms.deva || normalizeDictionaryRoman(b.entry.iast) === forms.roman;
+
+    if (aExact !== bExact) return aExact ? -1 : 1;
+
+    const aCross = isCrossReferenceSense(a.entry.meaning);
+    const bCross = isCrossReferenceSense(b.entry.meaning);
+
+    if (aCross !== bCross) return aCross ? 1 : -1;
+
+    const aRichness =
+      (Array.isArray(a.entry.senses) ? a.entry.senses.length : 0) * 20 +
+      String(a.entry.meaning || "").length;
+
+    const bRichness =
+      (Array.isArray(b.entry.senses) ? b.entry.senses.length : 0) * 20 +
+      String(b.entry.meaning || "").length;
+
+    if (bRichness !== aRichness) return bRichness - aRichness;
+
+    // Then shorter headwords first: guru before gurutva before guruśiṣya...
+    return Array.from(aWord).length - Array.from(bWord).length;
   }
 
   async function searchDictionary(query) {
     const clean = cleanDictionaryQuery(query);
+
     if (!clean) {
+      dictionarySearchResults = [];
+      dictionarySearchQuery = "";
+      dictionaryVisibleCount = DICTIONARY_PAGE_SIZE;
       renderDictionaryResults([], "");
       return;
     }
 
     try {
       const bucket = dictionaryBucketForQuery(clean);
-      const entries = dictionaryManifest ? await loadDictionaryChunk(bucket) : dictionaryEntries;
-      const results = entries
-        .map(entry => ({ entry, score: scoreDictionaryEntry(entry, clean) }))
+      const entries = dictionaryManifest
+        ? await loadDictionaryChunk(bucket)
+        : dictionaryEntries;
+
+      const ranked = entries
+        .map(entry => ({
+          entry,
+          score: scoreDictionaryEntry(entry, clean)
+        }))
         .filter(item => item.score > 0)
-        .sort((a, b) => {
-          if (b.score !== a.score) return b.score - a.score;
-          const aRichness = (a.entry.senses?.length || 0) * 10 + String(a.entry.meaning || "").length;
-          const bRichness = (b.entry.senses?.length || 0) * 10 + String(b.entry.meaning || "").length;
-          return bRichness - aRichness;
-        })
-        .slice(0, 80)
-        .map(item => item.entry);
-      renderDictionaryResults(results, clean);
+        .sort((a, b) => dictionaryTieBreak(a, b, clean));
+
+      dictionarySearchResults = ranked.map(item => item.entry);
+      dictionarySearchQuery = clean;
+      dictionaryVisibleCount = DICTIONARY_PAGE_SIZE;
+
+      renderDictionaryResults(
+        dictionarySearchResults.slice(0, dictionaryVisibleCount),
+        dictionarySearchQuery
+      );
     } catch (error) {
       console.error("Dictionary chunk search failed:", error);
-      $("dictionaryResults").innerHTML = `<div class="dictionary-card"><div class="dictionary-meaning">The dictionary chunk could not be loaded. Make sure every <code>dict_*.json</code> file is uploaded beside <code>index.html</code>.</div></div>`;
+      $("dictionaryResults").innerHTML = `
+        <div class="dictionary-card">
+          <div class="dictionary-meaning">
+            The dictionary chunk could not be loaded. Make sure every
+            <code>dict_*.json</code> file is uploaded beside <code>index.html</code>.
+          </div>
+        </div>
+      `;
     }
   }
 
@@ -1062,16 +1303,16 @@
 
     if (!query) {
       container.innerHTML = `
-        <div class="dictionary-card">
+        <div class="dictionary-card dictionary-message-card">
           <div class="dictionary-meaning">Search for a Sanskrit word above.</div>
         </div>
       `;
       return;
     }
 
-    if (!results.length) {
+    if (!dictionarySearchResults.length) {
       container.innerHTML = `
-        <div class="dictionary-card">
+        <div class="dictionary-card dictionary-message-card">
           <div class="dictionary-meaning">
             No local dictionary matches for <strong>${escapeHTML(query)}</strong>.
           </div>
@@ -1080,30 +1321,52 @@
       return;
     }
 
-    results.forEach(entry => {
+    const forms = dictionaryExactForms(query);
+
+    results.forEach((entry, index) => {
       const card = document.createElement("article");
       card.className = "dictionary-card";
 
       const word = entry.word || "";
       const iast = entry.iast || devanagariToIast(word);
+      const grammar = readableGrammar(entry.grammar);
+      const concise = conciseMeaningForEntry(entry);
+      const exact =
+        word === forms.deva ||
+        normalizeDictionaryRoman(iast) === forms.roman;
+
+      if (exact) card.classList.add("dictionary-card-exact");
+
+      const allSenses = Array.isArray(entry.senses) && entry.senses.length
+        ? entry.senses
+        : (entry.meaning ? [entry.meaning] : []);
 
       card.innerHTML = `
         <div class="dictionary-card-head">
-          <div>
-            <div class="dictionary-word">${escapeHTML(word)}</div>
+          <div class="dictionary-heading-copy">
+            <div class="dictionary-word-row">
+              <div class="dictionary-word">${escapeHTML(word)}</div>
+              ${exact ? `<span class="exact-match-badge">Exact match</span>` : ""}
+            </div>
             <div class="dictionary-iast">${escapeHTML(iast)}</div>
-            ${entry.grammar ? `<div class="dictionary-grammar">${escapeHTML(entry.grammar)}</div>` : ""}
+            ${grammar ? `<div class="dictionary-grammar-clean">${escapeHTML(grammar)}</div>` : ""}
           </div>
         </div>
 
-        <div class="dictionary-meaning">${escapeHTML(entry.meaning || "")}</div>
-        ${Array.isArray(entry.senses) && entry.senses.length > 1 ? `
-          <details class="dictionary-senses">
-            <summary>More meanings (${entry.senses.length})</summary>
-            <ol>${entry.senses.slice(1).map(sense => `<li>${escapeHTML(sense)}</li>`).join("")}</ol>
+        <div class="dictionary-concise-label">Meaning</div>
+        <div class="dictionary-concise">${escapeHTML(concise)}</div>
+
+        ${allSenses.length ? `
+          <details class="dictionary-full-entry">
+            <summary>Full Monier-Williams entry${allSenses.length > 1 ? ` · ${allSenses.length} senses` : ""}</summary>
+            <ol>
+              ${allSenses.map(sense => `<li>${escapeHTML(sense)}</li>`).join("")}
+            </ol>
+            ${entry.slp1 ? `<div class="dictionary-slp1">Original SLP1 headword: <code>${escapeHTML(entry.slp1)}</code></div>` : ""}
           </details>
         ` : ""}
-        <div class="dictionary-source">${escapeHTML(entry.source || "Local dictionary")}${entry.slp1 ? ` • SLP1: ${escapeHTML(entry.slp1)}` : ""}</div>
+
+        <div class="dictionary-source">${escapeHTML(entry.source || "Local dictionary")}</div>
 
         <div class="dictionary-actions">
           <button class="primary-btn" type="button" data-insert>Insert into document</button>
@@ -1118,12 +1381,45 @@
 
       card.querySelector("[data-copy]").addEventListener("click", async () => {
         await navigator.clipboard.writeText(
-          `${word}${iast ? ` (${iast})` : ""} — ${entry.meaning || ""}`
+          `${word}${iast ? ` (${iast})` : ""} — ${concise}`
         );
       });
 
       container.appendChild(card);
     });
+
+    if (dictionaryVisibleCount < dictionarySearchResults.length) {
+      const remaining = dictionarySearchResults.length - dictionaryVisibleCount;
+      const loadMoreWrap = document.createElement("div");
+      loadMoreWrap.className = "dictionary-load-more-wrap";
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "secondary-btn dictionary-load-more";
+      button.textContent = `Load more (${Math.min(DICTIONARY_PAGE_SIZE, remaining)} of ${remaining} remaining)`;
+
+      button.addEventListener("click", () => {
+        dictionaryVisibleCount = Math.min(
+          dictionaryVisibleCount + DICTIONARY_PAGE_SIZE,
+          dictionarySearchResults.length
+        );
+
+        renderDictionaryResults(
+          dictionarySearchResults.slice(0, dictionaryVisibleCount),
+          dictionarySearchQuery
+        );
+      });
+
+      loadMoreWrap.appendChild(button);
+      container.appendChild(loadMoreWrap);
+    }
+
+    const summary = document.createElement("div");
+    summary.className = "dictionary-result-summary";
+    summary.textContent =
+      `${dictionarySearchResults.length.toLocaleString()} match${dictionarySearchResults.length === 1 ? "" : "es"} · showing ${Math.min(dictionaryVisibleCount, dictionarySearchResults.length).toLocaleString()}`;
+
+    container.prepend(summary);
   }
 
   function lookupSelectedWord() {

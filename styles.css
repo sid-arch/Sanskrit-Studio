@@ -1515,3 +1515,150 @@ textarea:focus-visible,
 .dictionary-senses summary { cursor: pointer; color: var(--accent-hover); font-size: 11px; font-weight: 700; }
 .dictionary-senses ol { margin: 8px 0 0; padding-left: 22px; color: var(--text); }
 .dictionary-senses li { margin: 6px 0; line-height: 1.5; }
+
+
+/* ============================================================
+   V12 — Dictionary search + concise definition experience
+   ============================================================ */
+
+.dictionary-result-summary {
+  margin: 2px 2px 5px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.dictionary-card {
+  position: relative;
+}
+
+.dictionary-card-exact {
+  border-color: color-mix(in srgb, var(--accent) 72%, var(--border));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent),
+    var(--shadow);
+}
+
+.dictionary-heading-copy {
+  min-width: 0;
+}
+
+.dictionary-word-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.exact-match-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: var(--accent-hover);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border));
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .055em;
+}
+
+.dictionary-grammar-clean {
+  display: inline-flex;
+  margin-top: 7px;
+  padding: 4px 8px;
+  border-radius: 7px;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 10px;
+}
+
+.dictionary-concise-label {
+  margin-top: 13px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.dictionary-concise {
+  margin-top: 5px;
+  max-width: 900px;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.dictionary-full-entry {
+  margin-top: 13px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.dictionary-full-entry summary {
+  width: max-content;
+  max-width: 100%;
+  color: var(--accent-hover);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dictionary-full-entry ol {
+  margin: 10px 0 0;
+  padding-left: 22px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.58;
+}
+
+.dictionary-full-entry li + li {
+  margin-top: 6px;
+}
+
+.dictionary-slp1 {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.dictionary-slp1 code {
+  color: var(--text);
+}
+
+.dictionary-source {
+  margin-top: 12px;
+}
+
+.dictionary-load-more-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 3px;
+}
+
+.dictionary-load-more {
+  min-width: 220px;
+  justify-content: center;
+}
+
+.dictionary-message-card {
+  color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  .dictionary-concise {
+    font-size: 15px;
+  }
+
+  .dictionary-card {
+    padding: 14px;
+  }
+
+  .dictionary-load-more {
+    width: 100%;
+  }
+}

@@ -1,0 +1,153 @@
+{
+  "format": "SanskritStudioEnglishDictionaryV1",
+  "entryCount": 32415,
+  "sources": [
+    {
+      "id": "AE",
+      "name": "Apte Student's English-Sanskrit Dictionary (1920)",
+      "entries": 10743
+    },
+    {
+      "id": "BOR",
+      "name": "Borooah English-Sanskrit Dictionary (1877)",
+      "entries": 23290
+    },
+    {
+      "id": "MWE",
+      "name": "Monier-Williams English-Sanskrit Dictionary (1851)",
+      "entries": 32110
+    }
+  ],
+  "chunks": {
+    "a": {
+      "file": "eng_a.json",
+      "entries": 1838,
+      "bytes": 3117334
+    },
+    "b": {
+      "file": "eng_b.json",
+      "entries": 1830,
+      "bytes": 2940824
+    },
+    "c": {
+      "file": "eng_c.json",
+      "entries": 3469,
+      "bytes": 6079948
+    },
+    "d": {
+      "file": "eng_d.json",
+      "entries": 2359,
+      "bytes": 4677543
+    },
+    "e": {
+      "file": "eng_e.json",
+      "entries": 1535,
+      "bytes": 3142564
+    },
+    "f": {
+      "file": "eng_f.json",
+      "entries": 1693,
+      "bytes": 3357025
+    },
+    "g": {
+      "file": "eng_g.json",
+      "entries": 1211,
+      "bytes": 2110685
+    },
+    "h": {
+      "file": "eng_h.json",
+      "entries": 1301,
+      "bytes": 2218735
+    },
+    "i": {
+      "file": "eng_i.json",
+      "entries": 2054,
+      "bytes": 4462140
+    },
+    "j": {
+      "file": "eng_j.json",
+      "entries": 261,
+      "bytes": 515258
+    },
+    "k": {
+      "file": "eng_k.json",
+      "entries": 167,
+      "bytes": 374718
+    },
+    "l": {
+      "file": "eng_l.json",
+      "entries": 1204,
+      "bytes": 2508401
+    },
+    "m": {
+      "file": "eng_m.json",
+      "entries": 1686,
+      "bytes": 3428061
+    },
+    "n": {
+      "file": "eng_n.json",
+      "entries": 571,
+      "bytes": 1111922
+    },
+    "o": {
+      "file": "eng_o.json",
+      "entries": 800,
+      "bytes": 1640705
+    },
+    "p": {
+      "file": "eng_p.json",
+      "entries": 2773,
+      "bytes": 5629579
+    },
+    "q": {
+      "file": "eng_q.json",
+      "entries": 174,
+      "bytes": 320176
+    },
+    "r": {
+      "file": "eng_r.json",
+      "entries": 1428,
+      "bytes": 3416181
+    },
+    "s": {
+      "file": "eng_s.json",
+      "entries": 3181,
+      "bytes": 6289309
+    },
+    "t": {
+      "file": "eng_t.json",
+      "entries": 1118,
+      "bytes": 1810333
+    },
+    "u": {
+      "file": "eng_u.json",
+      "entries": 688,
+      "bytes": 849674
+    },
+    "v": {
+      "file": "eng_v.json",
+      "entries": 406,
+      "bytes": 628716
+    },
+    "w": {
+      "file": "eng_w.json",
+      "entries": 585,
+      "bytes": 1073881
+    },
+    "x": {
+      "file": "eng_x.json",
+      "entries": 3,
+      "bytes": 1853
+    },
+    "y": {
+      "file": "eng_y.json",
+      "entries": 55,
+      "bytes": 110462
+    },
+    "z": {
+      "file": "eng_z.json",
+      "entries": 25,
+      "bytes": 41234
+    }
+  }
+}

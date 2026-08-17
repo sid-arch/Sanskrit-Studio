@@ -49,7 +49,7 @@
   // CONSTANTS / STATE
   // -------------------------
   const DB_NAME = "SanskritStudio";
-  const DB_VERSION = 13;
+  const DB_VERSION = 14;
   const SNAPSHOT_MIN_INTERVAL = 45_000;
   const MAX_HISTORY_PER_DOCUMENT = 30;
   const SAVE_DELAY = 350;
@@ -60,6 +60,8 @@
   let dictionaryEntries = []; // starter fallback only
   let dictionaryManifest = null;
   const dictionaryChunkCache = new Map();
+  let englishDictionaryManifest = null;
+  const englishDictionaryChunkCache = new Map();
 
   // V12 dictionary result state
   let dictionarySearchResults = [];
@@ -949,6 +951,29 @@
   // -------------------------
   // DICTIONARY
   // -------------------------
+  async function loadEnglishDictionaryManifest() {
+    try {
+      const r = await fetch("english_manifest.json", {cache:"no-store"});
+      if (!r.ok) throw new Error(`english_manifest.json returned ${r.status}`);
+      englishDictionaryManifest = await r.json();
+    } catch (e) {
+      console.warn("English dictionary unavailable:", e);
+      englishDictionaryManifest = null;
+    }
+  }
+
+  async function loadEnglishDictionaryChunk(bucket) {
+    if (!englishDictionaryManifest) return [];
+    const info = englishDictionaryManifest.chunks?.[bucket];
+    if (!info?.file) return [];
+    if (englishDictionaryChunkCache.has(bucket)) return englishDictionaryChunkCache.get(bucket);
+    const r = await fetch(info.file, {cache:"force-cache"});
+    if (!r.ok) throw new Error(`${info.file} returned ${r.status}`);
+    const p = await r.json(), es = Array.isArray(p) ? p : (p.entries || []);
+    englishDictionaryChunkCache.set(bucket, es);
+    return es;
+  }
+
   async function loadDictionary() {
     try {
       const manifestResponse = await fetch("dictionary_manifest.json", { cache: "no-store" });
@@ -1009,6 +1034,14 @@
 
   // V12: common-word overrides provide a clean learner-friendly
   // definition while the full Monier-Williams senses remain available below.
+  const COMMON_ROMAN_ALIASES = {
+    "namaste": {word:"नमस्ते", iast:"namaste", concise:"A respectful greeting or salutation; an expression of reverence or bowing."},
+    "namaskar": {word:"नमस्कार", iast:"namaskāra", concise:"Salutation, greeting, reverence, or respectful homage."},
+    "namaskara": {word:"नमस्कार", iast:"namaskāra", concise:"Salutation, greeting, reverence, or respectful homage."},
+    "karuna": {word:"करुणा", iast:"karuṇā", concise:"Compassion, pity, tenderness, or sympathy."},
+    "prema": {word:"प्रेम", iast:"prema", concise:"Love, affection, fondness, or deep attachment."}
+  };
+
   const COMMON_CONCISE_DEFINITIONS = {
     "गुरु": "Teacher, mentor, or spiritual guide; also heavy, weighty, important, or venerable.",
     "धर्म": "Duty, law, right conduct, moral order, or an essential principle.",
@@ -1306,175 +1339,79 @@
     return Array.from(aWord).length - Array.from(bWord).length;
   }
 
+  function englishBucketForQuery(q) {
+    const c=String(q||"").trim().toLowerCase(), f=c[0]||"";
+    return /^[a-z]$/.test(f)?f:"other";
+  }
+  function scoreEnglishEntry(entry,q) {
+    const k=String(entry.key||"").toLowerCase(), x=String(q||"").toLowerCase().trim();
+    if(k===x)return 9600;
+    if(k.startsWith(x))return 5400-Math.min(400,k.length-x.length);
+    if(k.includes(x))return 2200-Math.min(300,k.length-x.length);
+    return 0;
+  }
   async function searchDictionary(query) {
-    const clean = cleanDictionaryQuery(query);
-
-    if (!clean) {
-      dictionarySearchResults = [];
-      dictionarySearchQuery = "";
-      dictionaryVisibleCount = DICTIONARY_PAGE_SIZE;
-      renderDictionaryResults([], "");
-      return;
+    const clean=cleanDictionaryQuery(query);
+    if(!clean){dictionarySearchResults=[];dictionarySearchQuery="";dictionaryVisibleCount=DICTIONARY_PAGE_SIZE;renderDictionaryResults([],"");return;}
+    const merged=[];
+    const alias=COMMON_ROMAN_ALIASES[String(clean).toLowerCase().trim()];
+    if(alias) merged.push({kind:"alias",score:11000,entry:{word:alias.word,iast:alias.iast,meaning:alias.concise,senses:[alias.concise],source:"Sanskrit Studio common usage"}});
+    try{
+      const bucket=dictionaryBucketForQuery(clean);
+      const es=dictionaryManifest?await loadDictionaryChunk(bucket):dictionaryEntries;
+      for(const entry of es){const score=scoreDictionaryEntry(entry,clean);if(score>0)merged.push({kind:"sanskrit",score,entry});}
+    }catch(err){console.warn("Sanskrit lookup failed",err);}
+    if(/^[A-Za-z][A-Za-z0-9' -]*$/.test(clean)&&englishDictionaryManifest){
+      try{
+        const es=await loadEnglishDictionaryChunk(englishBucketForQuery(clean));
+        for(const entry of es){const score=scoreEnglishEntry(entry,clean);if(score>0)merged.push({kind:"english",score,entry});}
+      }catch(err){console.warn("English lookup failed",err);}
     }
+    merged.sort((a,b)=>b.score-a.score || (a.kind==="english"?String(a.entry.key).length:String(a.entry.word||"").length)-(b.kind==="english"?String(b.entry.key).length:String(b.entry.word||"").length));
+    const seen=new Set(),ded=[];
+    for(const it of merged){const id=it.kind==="english"?"e:"+it.entry.key:"s:"+it.entry.word+":"+it.entry.iast;if(seen.has(id))continue;seen.add(id);ded.push(it);}
+    dictionarySearchResults=ded;dictionarySearchQuery=clean;dictionaryVisibleCount=DICTIONARY_PAGE_SIZE;
+    renderDictionaryResults(ded.slice(0,dictionaryVisibleCount),clean);
+  }
 
-    try {
-      const bucket = dictionaryBucketForQuery(clean);
-      const entries = dictionaryManifest
-        ? await loadDictionaryChunk(bucket)
-        : dictionaryEntries;
-
-      const ranked = entries
-        .map(entry => ({
-          entry,
-          score: scoreDictionaryEntry(entry, clean)
-        }))
-        .filter(item => item.score > 0)
-        .sort((a, b) => dictionaryTieBreak(a, b, clean));
-
-      dictionarySearchResults = ranked.map(item => item.entry);
-      dictionarySearchQuery = clean;
-      dictionaryVisibleCount = DICTIONARY_PAGE_SIZE;
-
-      renderDictionaryResults(
-        dictionarySearchResults.slice(0, dictionaryVisibleCount),
-        dictionarySearchQuery
-      );
-    } catch (error) {
-      console.error("Dictionary chunk search failed:", error);
-      $("dictionaryResults").innerHTML = `
-        <div class="dictionary-card">
-          <div class="dictionary-meaning">
-            The dictionary chunk could not be loaded. Make sure every
-            <code>dict_*.json</code> file is uploaded beside <code>index.html</code>.
-          </div>
-        </div>
-      `;
-    }
+  function renderEnglishDictionaryCard(item) {
+    const entry=item.entry, card=document.createElement("article");
+    card.className="dictionary-card dictionary-card-english";
+    const exact=String(entry.key||"").toLowerCase()===String(dictionarySearchQuery||"").toLowerCase();
+    if(exact)card.classList.add("dictionary-card-exact");
+    const eqs=Array.isArray(entry.sanskrit)?entry.sanskrit:[], vis=eqs.slice(0,14);
+    card.innerHTML=`
+      <div class="dictionary-card-head"><div class="dictionary-heading-copy">
+        <div class="dictionary-word-row"><div class="dictionary-english-word">${escapeHTML(entry.key||"")}</div>${exact?'<span class="exact-match-badge">Exact English match</span>':""}</div>
+        <div class="dictionary-direction-label">English → Sanskrit</div>
+      </div></div>
+      <div class="dictionary-concise-label">Sanskrit equivalents</div>
+      <div class="english-sanskrit-equivalents">${vis.map((x,i)=>`<button class="sanskrit-equivalent" type="button" data-eq="${i}"><span class="equivalent-deva">${escapeHTML(x.word||"")}</span><span class="equivalent-iast">${escapeHTML(x.iast||"")}</span></button>`).join("")}</div>
+      ${entry.details?.length?`<details class="dictionary-full-entry"><summary>Full English → Sanskrit source entries · ${entry.details.length} source${entry.details.length===1?"":"s"}</summary>${entry.details.map(d=>`<div class="english-source-detail"><strong>${escapeHTML(d.source||"")}</strong><p>${escapeHTML(d.body||"")}</p></div>`).join("")}</details>`:""}
+      <div class="dictionary-source">${escapeHTML((entry.sources||[]).join(" • "))}</div>`;
+    card.querySelectorAll("[data-eq]").forEach(b=>b.onclick=()=>{const x=vis[Number(b.dataset.eq)];if(x?.word){showView("write");insertTextAtCursor(x.word);}});
+    return card;
   }
 
   function renderDictionaryResults(results, query) {
-    const container = $("dictionaryResults");
-    container.innerHTML = "";
-
-    if (!query) {
-      container.innerHTML = `
-        <div class="dictionary-card dictionary-message-card">
-          <div class="dictionary-meaning">Search for a Sanskrit word above.</div>
-        </div>
-      `;
-      return;
-    }
-
-    if (!dictionarySearchResults.length) {
-      container.innerHTML = `
-        <div class="dictionary-card dictionary-message-card">
-          <div class="dictionary-meaning">
-            No local dictionary matches for <strong>${escapeHTML(query)}</strong>.
-          </div>
-        </div>
-      `;
-      return;
-    }
-
-    const forms = dictionaryExactForms(query);
-
-    results.forEach((entry, index) => {
-      const card = document.createElement("article");
-      card.className = "dictionary-card";
-
-      const word = entry.word || "";
-      const iast = entry.iast || devanagariToIast(word);
-      const grammar = readableGrammar(entry.grammar);
-      const concise = conciseMeaningForEntry(entry);
-      const exact =
-        word === forms.deva ||
-        normalizeDictionaryRoman(iast) === forms.roman;
-
-      if (exact) card.classList.add("dictionary-card-exact");
-
-      const allSenses = Array.isArray(entry.senses) && entry.senses.length
-        ? entry.senses
-        : (entry.meaning ? [entry.meaning] : []);
-
-      card.innerHTML = `
-        <div class="dictionary-card-head">
-          <div class="dictionary-heading-copy">
-            <div class="dictionary-word-row">
-              <div class="dictionary-word">${escapeHTML(word)}</div>
-              ${exact ? `<span class="exact-match-badge">Exact match</span>` : ""}
-            </div>
-            <div class="dictionary-iast">${escapeHTML(iast)}</div>
-            ${grammar ? `<div class="dictionary-grammar-clean">${escapeHTML(grammar)}</div>` : ""}
-          </div>
-        </div>
-
-        <div class="dictionary-concise-label">Meaning</div>
-        <div class="dictionary-concise">${escapeHTML(concise)}</div>
-
-        ${allSenses.length ? `
-          <details class="dictionary-full-entry">
-            <summary>Full Monier-Williams entry${allSenses.length > 1 ? ` · ${allSenses.length} senses` : ""}</summary>
-            <ol>
-              ${allSenses.map(sense => `<li>${escapeHTML(sense)}</li>`).join("")}
-            </ol>
-            ${entry.slp1 ? `<div class="dictionary-slp1">Original SLP1 headword: <code>${escapeHTML(entry.slp1)}</code></div>` : ""}
-          </details>
-        ` : ""}
-
-        <div class="dictionary-source">${escapeHTML(entry.source || "Local dictionary")}</div>
-
-        <div class="dictionary-actions">
-          <button class="primary-btn" type="button" data-insert>Insert into document</button>
-          <button class="secondary-btn" type="button" data-copy>Copy entry</button>
-        </div>
-      `;
-
-      card.querySelector("[data-insert]").addEventListener("click", () => {
-        showView("write");
-        insertTextAtCursor(word);
-      });
-
-      card.querySelector("[data-copy]").addEventListener("click", async () => {
-        await navigator.clipboard.writeText(
-          `${word}${iast ? ` (${iast})` : ""} — ${concise}`
-        );
-      });
-
-      container.appendChild(card);
+    const c=$("dictionaryResults"); c.innerHTML="";
+    if(!query){c.innerHTML='<div class="dictionary-card dictionary-message-card"><div class="dictionary-meaning">Search Sanskrit, romanized Sanskrit, or English. Try <strong>गुरु</strong>, <strong>guru</strong>, <strong>love</strong>, or <strong>compassion</strong>.</div></div>';return;}
+    if(!dictionarySearchResults.length){c.innerHTML=`<div class="dictionary-card dictionary-message-card"><div class="dictionary-meaning">No dictionary matches for <strong>${escapeHTML(query)}</strong>.</div></div>`;return;}
+    const forms=dictionaryExactForms(query);
+    results.forEach(item=>{
+      if(item.kind==="english"){c.appendChild(renderEnglishDictionaryCard(item));return;}
+      const entry=item.entry,card=document.createElement("article");card.className="dictionary-card";
+      const word=entry.word||"",ia=entry.iast||devanagariToIast(word),grammar=readableGrammar(entry.grammar),concise=conciseMeaningForEntry(entry);
+      const exact=item.kind==="alias"||word===forms.deva||normalizeDictionaryRoman(ia)===forms.roman;if(exact)card.classList.add("dictionary-card-exact");
+      const senses=Array.isArray(entry.senses)&&entry.senses.length?entry.senses:(entry.meaning?[entry.meaning]:[]);
+      card.innerHTML=`<div class="dictionary-card-head"><div class="dictionary-heading-copy"><div class="dictionary-word-row"><div class="dictionary-word">${escapeHTML(word)}</div>${exact?`<span class="exact-match-badge">${item.kind==="alias"?"Common form":"Exact match"}</span>`:""}</div><div class="dictionary-iast">${escapeHTML(ia)}</div>${grammar?`<div class="dictionary-grammar-clean">${escapeHTML(grammar)}</div>`:""}</div></div>
+      <div class="dictionary-concise-label">Meaning</div><div class="dictionary-concise">${escapeHTML(concise)}</div>
+      ${senses.length?`<details class="dictionary-full-entry"><summary>${item.kind==="alias"?"More information":`Full Monier-Williams entry${senses.length>1?` · ${senses.length} senses`:""}`}</summary><ol>${senses.map(x=>`<li>${escapeHTML(x)}</li>`).join("")}</ol></details>`:""}
+      <div class="dictionary-source">${escapeHTML(entry.source||"Local dictionary")}</div><div class="dictionary-actions"><button class="primary-btn" data-ins>Insert into document</button><button class="secondary-btn" data-copy>Copy entry</button></div>`;
+      card.querySelector("[data-ins]").onclick=()=>{showView("write");insertTextAtCursor(word)};card.querySelector("[data-copy]").onclick=()=>navigator.clipboard.writeText(`${word} (${ia}) — ${concise}`);c.appendChild(card);
     });
-
-    if (dictionaryVisibleCount < dictionarySearchResults.length) {
-      const remaining = dictionarySearchResults.length - dictionaryVisibleCount;
-      const loadMoreWrap = document.createElement("div");
-      loadMoreWrap.className = "dictionary-load-more-wrap";
-
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "secondary-btn dictionary-load-more";
-      button.textContent = `Load more (${Math.min(DICTIONARY_PAGE_SIZE, remaining)} of ${remaining} remaining)`;
-
-      button.addEventListener("click", () => {
-        dictionaryVisibleCount = Math.min(
-          dictionaryVisibleCount + DICTIONARY_PAGE_SIZE,
-          dictionarySearchResults.length
-        );
-
-        renderDictionaryResults(
-          dictionarySearchResults.slice(0, dictionaryVisibleCount),
-          dictionarySearchQuery
-        );
-      });
-
-      loadMoreWrap.appendChild(button);
-      container.appendChild(loadMoreWrap);
-    }
-
-    const summary = document.createElement("div");
-    summary.className = "dictionary-result-summary";
-    summary.textContent =
-      `${dictionarySearchResults.length.toLocaleString()} match${dictionarySearchResults.length === 1 ? "" : "es"} · showing ${Math.min(dictionaryVisibleCount, dictionarySearchResults.length).toLocaleString()}`;
-
-    container.prepend(summary);
+    if(dictionaryVisibleCount<dictionarySearchResults.length){const r=dictionarySearchResults.length-dictionaryVisibleCount,w=document.createElement("div");w.className="dictionary-load-more-wrap";const b=document.createElement("button");b.className="secondary-btn dictionary-load-more";b.textContent=`Load more (${Math.min(DICTIONARY_PAGE_SIZE,r)} of ${r} remaining)`;b.onclick=()=>{dictionaryVisibleCount=Math.min(dictionaryVisibleCount+DICTIONARY_PAGE_SIZE,dictionarySearchResults.length);renderDictionaryResults(dictionarySearchResults.slice(0,dictionaryVisibleCount),dictionarySearchQuery)};w.appendChild(b);c.appendChild(w);}
+    const sm=document.createElement("div");sm.className="dictionary-result-summary";sm.textContent=`${dictionarySearchResults.length.toLocaleString()} matches · showing ${Math.min(dictionaryVisibleCount,dictionarySearchResults.length).toLocaleString()}`;c.prepend(sm);
   }
 
   function lookupSelectedWord() {
@@ -1937,6 +1874,7 @@
     await openDatabase();
     await loadSettings();
     await loadDictionary();
+    await loadEnglishDictionaryManifest();
     await loadDocuments();
 
     bindEvents();

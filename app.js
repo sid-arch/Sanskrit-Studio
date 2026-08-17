@@ -69,6 +69,7 @@
   let dictionaryVisibleCount = 20;
   const DICTIONARY_PAGE_SIZE = 20;
   let lastEditorRange = null;
+  let dictionaryReturnRange = null;
   let saveTimer = null;
   let lastSnapshotTime = 0;
 
@@ -686,6 +687,51 @@
     selection.addRange(lastEditorRange);
 
     return true;
+  }
+
+  function rememberDictionaryReturnPosition() {
+    const selection = window.getSelection();
+
+    if (selection && selection.rangeCount && $("editor").contains(selection.anchorNode)) {
+      dictionaryReturnRange = selection.getRangeAt(0).cloneRange();
+      lastEditorRange = dictionaryReturnRange.cloneRange();
+      return;
+    }
+
+    if (lastEditorRange) {
+      dictionaryReturnRange = lastEditorRange.cloneRange();
+    }
+  }
+
+  function restoreDictionaryReturnPosition() {
+    const range = dictionaryReturnRange || lastEditorRange;
+    $("editor").focus();
+
+    if (!range) return false;
+
+    try {
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range.cloneRange());
+      lastEditorRange = range.cloneRange();
+      return true;
+    } catch {
+      return restoreEditorRange();
+    }
+  }
+
+  function insertDictionaryWordAtSavedCursor(text) {
+    showView("write");
+
+    requestAnimationFrame(() => {
+      restoreDictionaryReturnPosition();
+      insertTextAtCursor(text);
+      captureEditorRange();
+
+      if (lastEditorRange) {
+        dictionaryReturnRange = lastEditorRange.cloneRange();
+      }
+    });
   }
 
   function execCommand(command, value = null) {
@@ -1389,7 +1435,7 @@
       <div class="english-sanskrit-equivalents">${vis.map((x,i)=>`<button class="sanskrit-equivalent" type="button" data-eq="${i}"><span class="equivalent-deva">${escapeHTML(x.word||"")}</span><span class="equivalent-iast">${escapeHTML(x.iast||"")}</span></button>`).join("")}</div>
       ${entry.details?.length?`<details class="dictionary-full-entry"><summary>Full English → Sanskrit source entries · ${entry.details.length} source${entry.details.length===1?"":"s"}</summary>${entry.details.map(d=>`<div class="english-source-detail"><strong>${escapeHTML(d.source||"")}</strong><p>${escapeHTML(d.body||"")}</p></div>`).join("")}</details>`:""}
       <div class="dictionary-source">${escapeHTML((entry.sources||[]).join(" • "))}</div>`;
-    card.querySelectorAll("[data-eq]").forEach(b=>b.onclick=()=>{const x=vis[Number(b.dataset.eq)];if(x?.word){showView("write");insertTextAtCursor(x.word);}});
+    card.querySelectorAll("[data-eq]").forEach(b=>b.onclick=()=>{const x=vis[Number(b.dataset.eq)];if(x?.word){insertDictionaryWordAtSavedCursor(x.word);}});
     return card;
   }
 
@@ -1408,7 +1454,7 @@
       <div class="dictionary-concise-label">Meaning</div><div class="dictionary-concise">${escapeHTML(concise)}</div>
       ${senses.length?`<details class="dictionary-full-entry"><summary>${item.kind==="alias"?"More information":`Full Monier-Williams entry${senses.length>1?` · ${senses.length} senses`:""}`}</summary><ol>${senses.map(x=>`<li>${escapeHTML(x)}</li>`).join("")}</ol></details>`:""}
       <div class="dictionary-source">${escapeHTML(entry.source||"Local dictionary")}</div><div class="dictionary-actions"><button class="primary-btn" data-ins>Insert into document</button><button class="secondary-btn" data-copy>Copy entry</button></div>`;
-      card.querySelector("[data-ins]").onclick=()=>{showView("write");insertTextAtCursor(word)};card.querySelector("[data-copy]").onclick=()=>navigator.clipboard.writeText(`${word} (${ia}) — ${concise}`);c.appendChild(card);
+      card.querySelector("[data-ins]").onclick=()=>{insertDictionaryWordAtSavedCursor(word)};card.querySelector("[data-copy]").onclick=()=>navigator.clipboard.writeText(`${word} (${ia}) — ${concise}`);c.appendChild(card);
     });
     if(dictionaryVisibleCount<dictionarySearchResults.length){const r=dictionarySearchResults.length-dictionaryVisibleCount,w=document.createElement("div");w.className="dictionary-load-more-wrap";const b=document.createElement("button");b.className="secondary-btn dictionary-load-more";b.textContent=`Load more (${Math.min(DICTIONARY_PAGE_SIZE,r)} of ${r} remaining)`;b.onclick=()=>{dictionaryVisibleCount=Math.min(dictionaryVisibleCount+DICTIONARY_PAGE_SIZE,dictionarySearchResults.length);renderDictionaryResults(dictionarySearchResults.slice(0,dictionaryVisibleCount),dictionarySearchQuery)};w.appendChild(b);c.appendChild(w);}
     const sm=document.createElement("div");sm.className="dictionary-result-summary";sm.textContent=`${dictionarySearchResults.length.toLocaleString()} matches · showing ${Math.min(dictionaryVisibleCount,dictionarySearchResults.length).toLocaleString()}`;c.prepend(sm);
@@ -1431,6 +1477,10 @@
   // VIEW / MODAL HELPERS
   // -------------------------
   function showView(view) {
+    if (view === "dictionary") {
+      rememberDictionaryReturnPosition();
+    }
+
     const isWrite = view === "write";
 
     $("writeView").classList.toggle("active", isWrite);
